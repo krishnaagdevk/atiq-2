@@ -2,7 +2,13 @@ import mongoose, { Schema } from "mongoose";
 
 const BatchSchema = new Schema(
   {
-    batchId: { type: String, required: true, unique: true, uppercase: true, trim: true },
+    batchId: {
+      type: String,
+      required: true,
+      unique: true,
+      uppercase: true,
+      trim: true,
+    },
     sku: { type: String, required: true, uppercase: true, trim: true },
     productName: { type: String, default: "" },
     producedQty: { type: Number, required: true, min: 1 },
@@ -19,9 +25,13 @@ const BatchSchema = new Schema(
       default: "Active",
     },
     liquidationPrice: { type: Number, default: 0 },
-    productionDate: { type: String, default: () => new Date().toISOString().split("T")[0] },
+    productionDate: {
+      type: String,
+      default: () => new Date().toISOString().split("T")[0],
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export const BatchModel = mongoose.models.Batch || mongoose.model("Batch", BatchSchema);
+export const BatchModel =
+  mongoose.models.Batch || mongoose.model("Batch", BatchSchema);

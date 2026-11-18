@@ -500,3 +500,5 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
   - Added reference cards in Settings and Costing Studio explaining the trims specifications.
 - **Recovery Input Polish**:
   - Cleaned Target Recovery Percentage input in Liquidation Calculator to a clean, standardized text field.
+- **Status Badges Polish**:
+  - Removed the inline `(i)` info button from batch status badges (`renderBatchStatusBadge`) across all tables (Batch Register, Stock Overview, Dead Stock Risk) to keep badges clean and uncluttered. Full policy remains accessible via dedicated header action buttons.

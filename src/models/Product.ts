@@ -2,7 +2,13 @@ import mongoose, { Schema } from "mongoose";
 
 const ProductSchema = new Schema(
   {
-    sku: { type: String, required: true, unique: true, uppercase: true, trim: true },
+    sku: {
+      type: String,
+      required: true,
+      unique: true,
+      uppercase: true,
+      trim: true,
+    },
     name: { type: String, required: true, trim: true },
     category: {
       type: String,
@@ -36,9 +42,14 @@ const ProductSchema = new Schema(
     cm1: { type: Number, default: 0 },
     cm2: { type: Number, default: 0 },
     cm3: { type: Number, default: 0 },
-    status: { type: String, enum: ["Active", "Paused", "Discontinued"], default: "Active" },
+    status: {
+      type: String,
+      enum: ["Active", "Paused", "Discontinued"],
+      default: "Active",
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export const ProductModel = mongoose.models.Product || mongoose.model("Product", ProductSchema);
+export const ProductModel =
+  mongoose.models.Product || mongoose.model("Product", ProductSchema);

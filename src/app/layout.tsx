@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Atiq Studio — Garment Costing & Profitability CRM",
-  description: "Product Costing, Batch Inventory and Margin Architecture Studio",
+  description:
+    "Product Costing, Batch Inventory and Margin Architecture Studio",
 };
 
 export const viewport: Viewport = {

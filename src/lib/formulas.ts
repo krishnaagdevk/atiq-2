@@ -3,7 +3,10 @@ import { ProductCosting, MarketplaceChannelConfig } from "./types";
 /**
  * Format currency in Indian standard (e.g. ₹1,20,000 or ₹1.08L)
  */
-export function formatINR(val: number | undefined | null, compact = false): string {
+export function formatINR(
+  val: number | undefined | null,
+  compact = false,
+): string {
   const num = Number(val || 0);
   if (compact && Math.abs(num) >= 100000) {
     return "₹" + (num / 100000).toFixed(2) + "L";
@@ -43,7 +46,8 @@ export function calculateGarmentEconomics(input: {
   targetCogsPct: number;
 }) {
   // 1. Calculate COGS (Manufacturing cost per piece)
-  const fabricCost = (Number(input.fabricQty) || 0) * (Number(input.fabricRate) || 0);
+  const fabricCost =
+    (Number(input.fabricQty) || 0) * (Number(input.fabricRate) || 0);
   const totalCogs =
     fabricCost +
     (Number(input.trimsCost) || 0) +
@@ -85,7 +89,8 @@ export function calculateGarmentEconomics(input: {
 
   // COTB Deductions: Logistics (forward + expected return friction) & Ad Marketing
   const forwardLogistics = Number(input.logisticsCost) || 0;
-  const reverseLogistics = (Number(input.reverseLogisticsCost) || 0) * returnRate;
+  const reverseLogistics =
+    (Number(input.reverseLogisticsCost) || 0) * returnRate;
   const totalLogistics = forwardLogistics + reverseLogistics;
   const marketing = Number(input.marketingCost) || 0;
 
@@ -150,7 +155,8 @@ export function simulateChannelEconomics({
 
   // Logistics: forward courier + reverse courier weighted by return friction
   const forwardShipping = Number(channel.shippingFee) || 0;
-  const reverseShipping = (Number(channel.reverseShippingFee) || 0) * returnRate;
+  const reverseShipping =
+    (Number(channel.reverseShippingFee) || 0) * returnRate;
   const totalLogistics = forwardShipping + reverseShipping;
 
   const marketing = Number(marketingCost) || 0;
@@ -163,7 +169,8 @@ export function simulateChannelEconomics({
   const netMarginPct = (cm3 / safeMrp) * 100;
 
   // Status benchmark: >18% Healthy / Green, 10-18% Moderate / Yellow, <10% Risk / Red
-  let statusBadge: "Healthy Profit" | "Moderate Margin" | "Loss Risk" = "Healthy Profit";
+  let statusBadge: "Healthy Profit" | "Moderate Margin" | "Loss Risk" =
+    "Healthy Profit";
   if (cm3 <= 0 || netMarginPct < 5) {
     statusBadge = "Loss Risk";
   } else if (netMarginPct < 15) {

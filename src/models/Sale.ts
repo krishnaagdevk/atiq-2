@@ -28,7 +28,7 @@ const SaleSchema = new Schema<ISale>(
     returnDeduction: { type: Number, default: 0 },
     netRevenue: { type: Number, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const SaleModel =

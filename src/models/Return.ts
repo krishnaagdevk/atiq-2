@@ -25,14 +25,22 @@ const ReturnSchema = new Schema(
     },
     condition: {
       type: String,
-      enum: ["Resaleable (Restocked)", "Minor Defect (Repairable)", "Damaged (Liquidation)"],
+      enum: [
+        "Resaleable (Restocked)",
+        "Minor Defect (Repairable)",
+        "Damaged (Liquidation)",
+      ],
       default: "Resaleable (Restocked)",
     },
     refundAmount: { type: Number, default: 0 },
     reverseLogisticsFee: { type: Number, default: 45 },
-    date: { type: String, default: () => new Date().toISOString().split("T")[0] },
+    date: {
+      type: String,
+      default: () => new Date().toISOString().split("T")[0],
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export const ReturnModel = mongoose.models.Return || mongoose.model("Return", ReturnSchema);
+export const ReturnModel =
+  mongoose.models.Return || mongoose.model("Return", ReturnSchema);

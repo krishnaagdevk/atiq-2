@@ -10,7 +10,10 @@ declare global {
   var mongooseCache: MongooseCache | undefined;
 }
 
-const cached: MongooseCache = global.mongooseCache || { conn: null, promise: null };
+const cached: MongooseCache = global.mongooseCache || {
+  conn: null,
+  promise: null,
+};
 
 if (!global.mongooseCache) {
   global.mongooseCache = cached;
@@ -23,7 +26,9 @@ export async function connectDB(): Promise<typeof mongoose | null> {
 
   const uri = process.env.MONGODB_URI;
   if (!uri) {
-    console.warn("⚠️ No MONGODB_URI provided. Running in offline/demo fallback mode.");
+    console.warn(
+      "⚠️ No MONGODB_URI provided. Running in offline/demo fallback mode.",
+    );
     return null;
   }
 
@@ -40,7 +45,10 @@ export async function connectDB(): Promise<typeof mongoose | null> {
         return mongooseInstance;
       })
       .catch((err) => {
-        console.warn("⚠️ MongoDB connection failed, falling back to offline mode:", err?.message || err);
+        console.warn(
+          "⚠️ MongoDB connection failed, falling back to offline mode:",
+          err?.message || err,
+        );
         return null;
       });
   }

@@ -504,21 +504,10 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
 
     return (
       <span
-        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}`}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}`}
         title={explanation}
       >
-        <span>{status}</span>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowDeadStockInfoModal(true);
-          }}
-          className="opacity-70 hover:opacity-100 hover:scale-125 transition"
-          title="Click to view full Dead Stock Ageing Policy & Conditions"
-        >
-          <Info className="w-3 h-3" />
-        </button>
+        {status}
       </span>
     );
   };
@@ -1508,7 +1497,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
               )}
             </div>
           </div>
-         
         </header>
 
         {/* Tab Pages */}
@@ -1553,7 +1541,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* KPI 1: Costed SKUs -> Costing Studio */}
                 <div
-                  onClick={() => setActiveTab("costing")}
+                  onClick={() => setActiveTab("skus")}
                   className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs hover:border-[#c58b4b] hover:shadow-md cursor-pointer transition-all duration-200 group flex flex-col justify-between"
                   title="Click to open Costing Studio"
                 >
@@ -3960,7 +3948,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     past accounting remains clean.
                   </p>
                 </div>
-                
               </div>
 
               {/* 4 Stock Exposure KPIs */}
@@ -4215,10 +4202,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                   <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#17202d]">
                     Dead Stock & Liquidation Manager
                   </h2>
-                  <p className="text-xs text-[#748092] mt-0.5">
-                    Act on ageing batches before they turn into complete
-                    dead-loss write-offs.
-                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -4241,10 +4224,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     {formatINR(atRiskVal)} of factory cash is currently locked
                     in {atRiskQty} slow-moving pieces.
                   </h4>
-                  <p className="text-[11px] text-amber-800 mt-0.5">
-                    Recovering even 60% of original manufacturing cost is far
-                    better than letting inventory rot in the warehouse.
-                  </p>
                 </div>
               </div>
 
@@ -4284,15 +4263,12 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                       </span>
                     </div>
                     <input
-                      type="range"
-                      min="20"
-                      max="100"
-                      step="5"
+                      type="text"
                       value={liquidationRecoveryPct}
                       onChange={(e) =>
                         setLiquidationRecoveryPct(Number(e.target.value))
                       }
-                      className="w-full accent-[#c58b4b]"
+                      className="w-full px-3 py-2 border border-[#dfe4eb] rounded-lg text-xs font-bold"
                     />
                   </div>
 

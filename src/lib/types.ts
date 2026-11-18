@@ -14,10 +14,20 @@ export type GarmentCategory = (typeof GARMENT_CATEGORIES)[number];
 export interface TrimsBreakdown {
   preset?: string;
   buttonsCost?: number;
-  zipperType?: "None" | "CFC Zipper" | "Concealed Zipper" | "Metal Zipper" | string;
+  zipperType?:
+    | "None"
+    | "CFC Zipper"
+    | "Concealed Zipper"
+    | "Metal Zipper"
+    | string;
   zipperCost?: number;
   fusingLiningCost?: number;
-  shoulderPadType?: "None" | "Standard Poly Pad" | "Molded Tailored Pad" | "Custom" | string;
+  shoulderPadType?:
+    | "None"
+    | "Standard Poly Pad"
+    | "Molded Tailored Pad"
+    | "Custom"
+    | string;
   shoulderPadCost?: number;
   eyeHookCost?: number;
   labelsAndThreadCost?: number;
@@ -89,8 +99,16 @@ export interface ReturnRecord {
   sku: string;
   batchId?: string;
   returnQty: number;
-  reason: "Size / Fit Issue" | "Fabric Quality / Defect" | "Not as Described" | "Changed Mind" | "RTO Undelivered";
-  condition: "Resaleable (Restocked)" | "Minor Defect (Repairable)" | "Damaged (Liquidation)";
+  reason:
+    | "Size / Fit Issue"
+    | "Fabric Quality / Defect"
+    | "Not as Described"
+    | "Changed Mind"
+    | "RTO Undelivered";
+  condition:
+    | "Resaleable (Restocked)"
+    | "Minor Defect (Repairable)"
+    | "Damaged (Liquidation)";
   refundAmount: number;
   reverseLogisticsFee: number;
   date: string;

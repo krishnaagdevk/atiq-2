@@ -9,15 +9,19 @@ const ExpenseSchema = new Schema(
       default: "Factory Salaries",
     },
     amount: { type: Number, required: true },
-    date: { type: String, default: () => new Date().toISOString().split("T")[0] },
+    date: {
+      type: String,
+      default: () => new Date().toISOString().split("T")[0],
+    },
     vendor: { type: String, default: "" },
     description: { type: String, default: "" },
     isRecurringMonthly: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export const ExpenseModel = mongoose.models.Expense || mongoose.model("Expense", ExpenseSchema);
+export const ExpenseModel =
+  mongoose.models.Expense || mongoose.model("Expense", ExpenseSchema);
 
 const OverheadConfigSchema = new Schema(
   {
@@ -89,8 +93,9 @@ const OverheadConfigSchema = new Schema(
     ageThresholdLiquidation: { type: Number, default: 90 },
     ageThresholdDead: { type: Number, default: 120 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const OverheadConfigModel =
-  mongoose.models.OverheadConfig || mongoose.model("OverheadConfig", OverheadConfigSchema);
+  mongoose.models.OverheadConfig ||
+  mongoose.model("OverheadConfig", OverheadConfigSchema);
