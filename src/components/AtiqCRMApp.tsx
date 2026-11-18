@@ -489,6 +489,9 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
 
   // Dead Stock Policy and Info Modal State
   const [showDeadStockInfoModal, setShowDeadStockInfoModal] = useState(false);
+  const [showCategoryInfo, setShowCategoryInfo] = useState(false);
+  const [showTrimsSpecInfo, setShowTrimsSpecInfo] = useState(false);
+  const [showCostingTrimsInfo, setShowCostingTrimsInfo] = useState(false);
 
   // Master Garment Categories (Config-Controlled with standard fallback)
   const [newCategoryInput, setNewCategoryInput] = useState("");
@@ -2935,10 +2938,56 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     {/* 2.2 Trims & Materials Dynamic Specification */}
                     <div className="bg-[#fcfdfd] border border-[#e7eaf0] rounded-xl p-3.5 space-y-3">
                       <div className="flex items-center justify-between border-b border-[#f0f2f5] pb-2">
-                        <span className="text-[11px] font-bold text-[#17202d] flex items-center gap-1.5 uppercase tracking-wider">
-                          <Scissors className="w-3.5 h-3.5 text-[#c58b4b]" />
-                          <span>Trims & Accessories Specification</span>
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-bold text-[#17202d] flex items-center gap-1.5 uppercase tracking-wider">
+                            <Scissors className="w-3.5 h-3.5 text-[#c58b4b]" />
+                            <span>Trims & Accessories Specification</span>
+                          </span>
+                          {/* Info Button with Interactive Popover */}
+                          <div className="relative inline-block group">
+                            <button
+                              type="button"
+                              onClick={() => setShowCostingTrimsInfo((prev) => !prev)}
+                              className="p-0.5 text-[#748092] hover:text-[#c58b4b] hover:bg-amber-50 rounded-full transition-colors cursor-pointer inline-flex items-center justify-center"
+                              title="Trims Specification Guide"
+                            >
+                              <Info className="w-3.5 h-3.5" />
+                            </button>
+                            <div
+                              className={`absolute left-0 top-full mt-1.5 z-30 w-72 sm:w-84 p-3 bg-white border border-[#dfe4eb] rounded-xl shadow-xl text-xs space-y-1.5 transition-all duration-200 ${
+                                showCostingTrimsInfo
+                                  ? "opacity-100 visible pointer-events-auto"
+                                  : "opacity-0 invisible group-hover:opacity-100 group-hover:visible pointer-events-none group-hover:pointer-events-auto"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5 font-bold text-[#17202d]">
+                                  <Info className="w-3.5 h-3.5 text-[#2b6cb0]" />
+                                  <span>Trims & Accessories Guidelines</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowCostingTrimsInfo(false);
+                                  }}
+                                  className="text-gray-400 hover:text-gray-600 p-0.5 rounded-md hover:bg-gray-100"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                              <p className="text-[11px] text-[#566273] leading-relaxed">
+                                Standard factory component specifications:
+                              </p>
+                              <ul className="text-[10px] text-[#748092] space-y-1 pt-1 border-t border-gray-100 list-disc pl-3.5">
+                                <li><strong>Zipper:</strong> CFC (continuous coil for pants/jackets) vs Concealed (invisible for dresses)</li>
+                                <li><strong>Button:</strong> Metal, plastic, or fabric buttons</li>
+                                <li><strong>Fusing:</strong> Low vs High collar/cuff bukram & lining</li>
+                                <li><strong>Eye Hook & Shoulder Pad:</strong> Pant hooks, bar, and poly pads</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
                         <span className="text-[11px] font-bold text-[#16835d]">
                           Trims Subtotal: {formatINR(costForm.trimsCost)}
                         </span>
@@ -6931,10 +6980,54 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                   {/* Left Column: Active Garment Categories & Add New */}
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-[11px] font-bold text-[#566273] uppercase tracking-wider mb-2">
-                        Active Garment Categories (
-                        {garmentCategoriesList.length})
-                      </label>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <label className="block text-[11px] font-bold text-[#566273] uppercase tracking-wider">
+                          Active Garment Categories (
+                          {garmentCategoriesList.length})
+                        </label>
+                        {/* Info Button with Interactive Popover */}
+                        <div className="relative inline-block group">
+                          <button
+                            type="button"
+                            onClick={() => setShowCategoryInfo((prev) => !prev)}
+                            className="p-0.5 text-[#748092] hover:text-[#c58b4b] hover:bg-amber-50 rounded-full transition-colors cursor-pointer inline-flex items-center justify-center"
+                            title="Category Sync Details"
+                          >
+                            <Info className="w-3.5 h-3.5" />
+                          </button>
+                          <div
+                            className={`absolute left-0 top-full mt-1.5 z-30 w-72 sm:w-80 p-3 bg-white border border-[#dfe4eb] rounded-xl shadow-xl text-xs space-y-1.5 transition-all duration-200 ${
+                              showCategoryInfo
+                                ? "opacity-100 visible pointer-events-auto"
+                                : "opacity-0 invisible group-hover:opacity-100 group-hover:visible pointer-events-none group-hover:pointer-events-auto"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5 font-bold text-[#17202d]">
+                                <Sparkles className="w-3.5 h-3.5 text-[#c58b4b]" />
+                                <span>Category Synchronization</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowCategoryInfo(false);
+                                }}
+                                className="text-gray-400 hover:text-gray-600 p-0.5 rounded-md hover:bg-gray-100"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <p className="text-[11px] text-[#566273] leading-relaxed">
+                              Added categories instantly appear in Costing Studio, Batch Production, Inventory, and Style Catalog, and link to automated trims recommendations.
+                            </p>
+                            <div className="pt-1.5 border-t border-gray-100 text-[10px] text-emerald-700 font-medium flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                              <span>Config-controlled & synced across all studios in real-time</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                       <div className="flex flex-wrap gap-2">
                         {garmentCategoriesList.map((cat) => (
                           <div
@@ -6976,25 +7069,60 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                         + Add Category
                       </button>
                     </form>
-                    <p className="text-[10px] text-[#748092]">
-                      💡 Added categories will instantly appear in Costing
-                      Studio and link to automated trims recommendations.
-                    </p>
                   </div>
 
                   {/* Right Column: Boss Rohit Rawat Spec Reference */}
                   <div className="bg-[#fcfdfd] border border-[#e7eaf0] rounded-xl p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Scissors className="w-4 h-4 text-[#c58b4b]" />
-                      <h4 className="text-xs font-bold text-[#17202d] uppercase tracking-wider">
-                        Trims & Accessories Standard Specification
-                      </h4>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Scissors className="w-4 h-4 text-[#c58b4b]" />
+                        <h4 className="text-xs font-bold text-[#17202d] uppercase tracking-wider">
+                          Trims & Accessories Standard Specification
+                        </h4>
+                      </div>
+                      {/* Info Button with Interactive Popover */}
+                      <div className="relative inline-block group">
+                        <button
+                          type="button"
+                          onClick={() => setShowTrimsSpecInfo((prev) => !prev)}
+                          className="p-1 text-[#748092] hover:text-[#c58b4b] hover:bg-amber-50 rounded-full transition-colors cursor-pointer inline-flex items-center justify-center"
+                          title="Trims Specification Guidelines"
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                        </button>
+                        <div
+                          className={`absolute right-0 top-full mt-1.5 z-30 w-72 sm:w-84 p-3 bg-white border border-[#dfe4eb] rounded-xl shadow-xl text-xs space-y-1.5 transition-all duration-200 ${
+                            showTrimsSpecInfo
+                              ? "opacity-100 visible pointer-events-auto"
+                              : "opacity-0 invisible group-hover:opacity-100 group-hover:visible pointer-events-none group-hover:pointer-events-auto"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 font-bold text-[#17202d]">
+                              <Info className="w-3.5 h-3.5 text-[#2b6cb0]" />
+                              <span>Manufacturing Guidelines</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowTrimsSpecInfo(false);
+                              }}
+                              className="text-gray-400 hover:text-gray-600 p-0.5 rounded-md hover:bg-gray-100"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-[#566273] leading-relaxed">
+                            Per manufacturing guidelines, Trims are divided into 5 standard components with automated dropdown selection in Costing Studio.
+                          </p>
+                          <div className="pt-1.5 border-t border-gray-100 text-[10px] text-[#748092] flex items-center gap-1">
+                            <span className="text-[#c58b4b] font-bold">💡 Tip:</span>
+                            <span>In Costing Studio, select the Trims Type (Dropdown) to auto-fill benchmark rates for each garment style.</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-[11px] text-[#566273] leading-relaxed">
-                      Per manufacturing guidelines, Trims are divided into 5
-                      standard components with automated dropdown selection in
-                      Costing Studio:
-                    </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[11px]">
                       <div className="bg-white p-2.5 rounded-lg border border-[#e7eaf0]">
                         <span className="font-bold text-[#17202d] block">
@@ -7031,14 +7159,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                           Pant hooks & bar, dress eyelets, kaj-hook closures
                         </span>
                       </div>
-                    </div>
-                    <div className="bg-[#f0f4f9] px-3 py-2 rounded-lg text-[10px] text-[#4b5563] flex items-center gap-1.5">
-                      <Info className="w-3.5 h-3.5 text-[#2b6cb0] shrink-0" />
-                      <span>
-                        In Costing Studio, select the{" "}
-                        <strong>Trims Type (Dropdown)</strong> to auto-fill
-                        these benchmark rates for each garment style.
-                      </span>
                     </div>
                   </div>
                 </div>
