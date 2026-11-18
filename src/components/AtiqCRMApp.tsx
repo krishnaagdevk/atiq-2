@@ -3012,8 +3012,8 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                                   dresses)
                                 </li>
                                 <li>
-                                  <strong>Button:</strong> Metal, plastic, or
-                                  fabric buttons
+                                  <strong>Button:</strong> Metal, Plastic, or
+                                  Fabric buttons
                                 </li>
                                 <li>
                                   <strong>Fusing:</strong> Low vs High
@@ -3078,14 +3078,14 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                                         }
                                         className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-semibold text-[#17202d] bg-white outline-none focus:border-[#c58b4b]"
                                       >
-                                        <option value="fabric">fabric</option>
-                                        <option value="zipper">zipper</option>
-                                        <option value="button">button</option>
-                                        <option value="fusing">fusing</option>
-                                        <option value="lining">lining</option>
-                                        <option value="eyehook">eyehook</option>
+                                        <option value="fabric">Fabric</option>
+                                        <option value="zipper">Zipper</option>
+                                        <option value="button">Button</option>
+                                        <option value="fusing">Fusing</option>
+                                        <option value="lining">Lining</option>
+                                        <option value="eyehook">Eyehook</option>
                                         <option value="shoulder pad">
-                                          shoulder pad
+                                          Shoulder Pad
                                         </option>
                                       </select>
                                     </td>
@@ -3699,86 +3699,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     </div>
                   </div>
 
-                  {/* Batch Production Economics & Net Pocket Cash Tiles */}
-                  <div className="bg-white border border-[#e7eaf0] rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3 min-w-0 w-full">
-                    <div className="flex items-center justify-between border-b border-[#e7eaf0] pb-2">
-                      <h4 className="font-bold text-xs uppercase tracking-wider text-[#17202d] flex items-center gap-1.5">
-                        <TrendingUp className="w-3.5 h-3.5 text-[#c58b4b]" />
-                        <span>
-                          Batch Production Return ({costForm.productionRunQty}{" "}
-                          pcs)
-                        </span>
-                      </h4>
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                          liveEco.cm3 >= 0
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : "bg-red-50 text-red-700 border-red-200"
-                        }`}
-                      >
-                        {liveEco.cm3 >= 0 ? "Profitable Run" : "Loss Risk"}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                        <span className="text-[10px] font-semibold text-[#748092] block uppercase tracking-wider">
-                          Making Capital
-                        </span>
-                        <span className="text-sm sm:text-base font-bold text-[#17202d] mt-0.5 block">
-                          {formatINR(
-                            liveEco.totalCogs * costForm.productionRunQty,
-                          )}
-                        </span>
-                        <span className="text-[10px] text-gray-500">
-                          Total batch cost
-                        </span>
-                      </div>
-
-                      <div className="p-3 bg-[#edf7f2] rounded-xl border border-[#c4e3d3]">
-                        <span className="text-[10px] font-semibold text-[#16835d] block uppercase tracking-wider">
-                          Net Pocket Cash
-                        </span>
-                        <span
-                          className={`text-sm sm:text-base font-black mt-0.5 block ${
-                            liveEco.cm3 >= 0 ? "text-[#16835d]" : "text-red-600"
-                          }`}
-                        >
-                          {formatINR(liveEco.cm3 * costForm.productionRunQty)}
-                        </span>
-                        <span className="text-[10px] text-[#16835d]">
-                          CM3 × {costForm.productionRunQty} pcs
-                        </span>
-                      </div>
-
-                      <div className="p-3 bg-[#eff6ff] rounded-xl border border-[#d0e1fd]">
-                        <span className="text-[10px] font-semibold text-[#2563eb] block uppercase tracking-wider">
-                          Gross Margin (CM2)
-                        </span>
-                        <span className="text-sm sm:text-base font-bold text-[#2563eb] mt-0.5 block">
-                          {formatINR(liveEco.cm2 * costForm.productionRunQty)}
-                        </span>
-                        <span className="text-[10px] text-[#2563eb]">
-                          Before courier & ads
-                        </span>
-                      </div>
-
-                      <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200">
-                        <span className="text-[10px] font-semibold text-[#a66a1d] block uppercase tracking-wider">
-                          Return on Capital
-                        </span>
-                        <span className="text-sm sm:text-base font-black text-[#a66a1d] mt-0.5 block">
-                          {liveEco.totalCogs > 0
-                            ? `${Math.round((liveEco.cm3 / liveEco.totalCogs) * 100)}%`
-                            : "0%"}
-                        </span>
-                        <span className="text-[10px] text-[#a66a1d]">
-                          Net CM3 / COGS
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* COGS Composition Breakdown */}
                   <div className="bg-white border border-[#e7eaf0] rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3 min-w-0 w-full">
                     <h4 className="font-bold text-xs uppercase tracking-wider text-[#17202d] border-b border-[#e7eaf0] pb-2 flex items-center justify-between">
@@ -3894,32 +3814,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                       across all e-commerce channels based on rates configured
                       in Settings.
                     </p>
-                  </div>
-
-                  {/* Simulator Controls */}
-                  <div className="flex flex-wrap items-center gap-3 bg-[#f5f6f8] px-3.5 py-2 rounded-xl border border-[#dfe4eb]">
-                    <div className="flex items-center gap-2">
-                      <Sliders className="w-3.5 h-3.5 text-[#c58b4b]" />
-                      <span className="text-xs font-bold text-[#17202d]">
-                        Test Promo Discount:
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="range"
-                        min="0"
-                        max="50"
-                        step="5"
-                        value={simPromoDiscount}
-                        onChange={(e) =>
-                          setSimPromoDiscount(Number(e.target.value))
-                        }
-                        className="w-24 sm:w-32 accent-[#c58b4b] cursor-pointer"
-                      />
-                      <span className="text-xs font-black text-[#17202d] w-9 text-right">
-                        {simPromoDiscount}%
-                      </span>
-                    </div>
                   </div>
                 </div>
 
