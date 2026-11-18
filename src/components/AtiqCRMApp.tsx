@@ -5699,7 +5699,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                             Default GST Slab Rate
                           </span>
                           <p className="text-[10px] text-[#748092]">
-                            Standard garment GST (5% / 12%)
+                            Standard garment GST
                           </p>
                         </div>
                         <input
