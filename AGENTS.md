@@ -473,7 +473,30 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     2. **Ageing Stock** (30–60 days): Velocity slowing. Triggers Meta ad push or promotional discount.
     3. **Liquidation Stage** (60–90 days): High capital risk. Activates Recovery Calculator to recover unit COGS.
     4. **Dead Stock** (> 90 days): Stagnant inventory bleeding carrying cost (~18% p.a.). Mandatory flash sale or lot salvage.
-  - Added header-level "Dead Stock Policy" trigger button across tables.
+
 - **UI Card Alignment & Normalization**:
   - Balanced Dashboard middle row (Cost Structure vs Margin Waterfall) with matching header heights and aligned footer bars.
   - Equalized Settings side-by-side cards: "Default Factory Rates" (6 inputs) and "Commercial Multipliers & Benchmarks" (6 inputs) with `items-stretch` and `h-full flex flex-col justify-between` to ensure identical rectangular proportions.
+
+### Config-Controlled Garment Categories & Trims Specification (Boss Rohit Rawat Spec) (November 2026)
+- **Garment Categories Config Control**:
+  - `garmentCategoriesList` in `src/components/AtiqCRMApp.tsx` is now dynamically backed by `config.garmentCategories` with fallback to standard categories `["Dresses", "Tops & Shirts", "Trousers & Pants", "Co-ord Sets", "Blazers & Jackets", "Jumpsuits"]`.
+  - Added full configuration manager under Settings tab (`activeTab === "settings"`):
+    - Shows all active categories as removable tag chips.
+    - Added inline form with `+ Add Category` invoking `addGarmentCategoryAction`.
+    - Added delete button invoking `deleteGarmentCategoryAction`.
+    - Added "Reset to Power Sutra Standard 6" invoking `saveConfigAction`.
+    - Real-time reactivity: added or removed categories immediately update the Costing Studio and all product filters without page refresh.
+- **Dedicated Trims & Accessories Specification Section & Dropdown**:
+  - Implemented exact garment specification requested by Boss Rohit Rawat:
+    1. **Primary Dropdown (`Trims Type (Dropdown)`)**: Matches `Fabric Type (Dropdown)` in layout and structure, pre-populating preset benchmarks (`Dresses`, `Tops & Shirts`, `Trousers & Pants`, `Co-ord Sets`, `Blazers & Jackets`, `Jumpsuits`, `Minimal / Basic`, `Custom`).
+    2. **Zippers (CFC vs Concealed)**: Standardized into continuous coil **CFC Zippers** (₹8) for pants/outerwear and invisible **Concealed Zippers** (₹10) for dresses/skirts with type dropdown and rate input.
+    3. **Buttons**: Placket, cuff or ornamental buttons.
+    4. **Fusing & Lining**: Collar/cuff bukram and astra inner lining.
+    5. **Shoulder Pad**: Standard Poly vs Molded Tailored padding for structured outerwear.
+    6. **Eye Hook & Clasps**: Pant hooks & bar, dress eyelets, and kaj-hook closures.
+    7. **Labels, Tags & Thread**: Woven neck label, wash care, tag & stitching thread.
+  - Linked Garment Category selector to automatically pre-select the matching trims preset on category change.
+  - Added reference cards in Settings and Costing Studio explaining the trims specifications.
+- **Recovery Input Polish**:
+  - Cleaned Target Recovery Percentage input in Liquidation Calculator to a clean, standardized text field.

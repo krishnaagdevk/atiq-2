@@ -678,11 +678,12 @@ export async function deleteGarmentCategoryAction(categoryName: string) {
       );
     }
 
-    if (memConfig.garmentCategories) {
-      memConfig.garmentCategories = memConfig.garmentCategories.filter(
-        (c) => c !== trimmed
-      );
+    if (!memConfig.garmentCategories) {
+      memConfig.garmentCategories = [...(initialConfig.garmentCategories || [])];
     }
+    memConfig.garmentCategories = memConfig.garmentCategories.filter(
+      (c) => c !== trimmed
+    );
     return { success: true, categories: memConfig.garmentCategories };
   } catch (error: any) {
     return { success: false, error: error.message };
