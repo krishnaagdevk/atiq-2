@@ -20,7 +20,9 @@ export interface TrimRowItem {
     | "fusing"
     | "lining"
     | "eyehook"
+    | "shoulder pad"
     | string;
+  subType?: string;
   name: string;
   quantity: number | string;
   price: number | string;

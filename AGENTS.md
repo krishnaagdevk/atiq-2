@@ -536,3 +536,12 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     - Persisted via `revivedFromSku`, `revivedFromQty`, `isRevivedVersion`, and `revivalNotes` across MongoDB (`Product.ts`), TypeScript types (`types.ts`), server actions (`crm.ts`), and UI views (Style Catalog, Costing Studio banner, and Revival Directory).
     - Dual launch options: **"✨ Save & Launch Revived SKU"** (instantly persists product and generates a 50-piece production batch) or **"Edit in Costing Studio"** (pre-fills all copied BOM lines and opens Costing Studio for detailed tailoring customization).
     - Integrated direct **"Revive SKU"** shortcut buttons into the Dead Stock Risk (`liquidation`) table.
+- **Conditional Secondary Dropdowns in Trims & Materials BOM Table**:
+  - Added conditional secondary variant/sub-type dropdowns right after the `Item Type` column:
+    - **`zipper`**: Secondary dropdown with `concealed` & `cfc`.
+    - **`button`**: Secondary dropdown with `metal button`, `plastic button`, `fabric button`.
+    - **`fusing`**: Secondary dropdown with `low`, `high`.
+    - **Other types (`fabric`, `lining`, `eyehook`, `shoulder pad`)**: Clean neutral placeholder (`—`) preserving column grid alignment.
+  - Automatic default assignment on type selection (`zipper` -> `concealed`, `button` -> `plastic button`, `fusing` -> `low`).
+  - Added `subType?: string` to `TrimRowItem` in `src/lib/types.ts` and updated handler `handleUpdateTrimItem` to support `subType`.
+  - Added `shoulder pad` to the `Item Type` dropdown options.

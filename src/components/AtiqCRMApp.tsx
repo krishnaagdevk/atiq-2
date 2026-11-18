@@ -111,6 +111,7 @@ const DEFAULT_TRIM_ROW_ITEMS: TrimRowItem[] = [
   {
     id: "trim-1",
     type: "zipper",
+    subType: "concealed",
     name: "Concealed Zipper",
     quantity: 1,
     price: 10,
@@ -118,6 +119,7 @@ const DEFAULT_TRIM_ROW_ITEMS: TrimRowItem[] = [
   {
     id: "trim-2",
     type: "button",
+    subType: "plastic button",
     name: "Horn Buttons",
     quantity: 2,
     price: 2,
@@ -125,6 +127,7 @@ const DEFAULT_TRIM_ROW_ITEMS: TrimRowItem[] = [
   {
     id: "trim-3",
     type: "fusing",
+    subType: "low",
     name: "Collar Bukram Fusing",
     quantity: 1,
     price: 8,
@@ -132,6 +135,7 @@ const DEFAULT_TRIM_ROW_ITEMS: TrimRowItem[] = [
   {
     id: "trim-4",
     type: "eyehook",
+    subType: "",
     name: "Hook & Bar",
     quantity: 1,
     price: 2,
@@ -544,22 +548,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
     }
   };
 
-  const handleResetGarmentCategories = async () => {
-    const res = await saveConfigAction({
-      ...config,
-      garmentCategories: [...GARMENT_CATEGORIES],
-    });
-    if (res.success) {
-      setConfig((prev) => ({
-        ...prev,
-        garmentCategories: [...GARMENT_CATEGORIES],
-      }));
-      setToast({
-        message: "Reset to standard 6 garment categories",
-        type: "success",
-      });
-    }
-  };
 
   // Render standardized batch status badge with interactive 'i' info trigger
   const renderBatchStatusBadge = (status: ProductionBatch["status"]) => {
@@ -647,16 +635,24 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
     }
   };
 
-  // Dynamic Trims Item Handlers (fabric, zipper, button, fusing, lining, eyehook)
+  // Dynamic Trims Item Handlers (fabric, zipper, button, fusing, lining, eyehook, shoulder pad)
   const handleUpdateTrimItem = (
     id: string,
-    field: "type" | "name" | "quantity" | "price",
+    field: "type" | "subType" | "name" | "quantity" | "price",
     value: string,
   ) => {
     setCostForm((prev) => {
       const updated = (prev.trimItems || []).map((item) => {
         if (item.id === id) {
-          return { ...item, [field]: value };
+          const next = { ...item, [field]: value };
+          // If changing type, auto-assign default subType
+          if (field === "type") {
+            if (value === "zipper") next.subType = "concealed";
+            else if (value === "button") next.subType = "plastic button";
+            else if (value === "fusing") next.subType = "low";
+            else next.subType = "";
+          }
+          return next;
         }
         return item;
       });
@@ -677,6 +673,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
     const newItem: TrimRowItem = {
       id: `trim-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       type: "zipper",
+      subType: "concealed",
       name: "",
       quantity: 1,
       price: "",
@@ -2682,7 +2679,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
 
                 {/* Revived Style Origin Banner */}
                 {costForm.isRevivedVersion && (
-                  <div className="bg-gradient-to-r from-amber-50 via-emerald-50 to-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                  <div className="bg-linear-to-r from-amber-50 via-emerald-50 to-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
                         <Sparkles className="w-5 h-5 text-white" />
@@ -2950,10 +2947,11 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                       {/* Dynamic Trims Row Table */}
                       <div className="space-y-3">
                         <div className="overflow-x-auto no-scrollbar -mx-3.5 sm:mx-0 px-3.5 sm:px-0">
-                          <table className="w-full text-left text-xs min-w-160">
+                          <table className="w-full text-left text-xs min-w-180">
                             <thead>
                               <tr className="border-b border-[#e7eaf0] text-[#748092] text-[10px] font-bold uppercase tracking-wider">
-                                <th className="py-2 px-2.5 w-36">Item Type</th>
+                                <th className="py-2 px-2.5 w-32">Item Type</th>
+                                <th className="py-2 px-2.5 w-36">Option / Sub-Type</th>
                                 <th className="py-2 px-2.5">Name / Description</th>
                                 <th className="py-2 px-2.5 w-28">Quantity Use</th>
                                 <th className="py-2 px-2.5 w-28">Price (₹)</th>
@@ -2990,7 +2988,63 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                                         <option value="fusing">fusing</option>
                                         <option value="lining">lining</option>
                                         <option value="eyehook">eyehook</option>
+                                        <option value="shoulder pad">shoulder pad</option>
                                       </select>
+                                    </td>
+
+                                    {/* 2. Additional conditional dropdown (zipper, button, fusing) */}
+                                    <td className="py-2 px-2.5">
+                                      {item.type === "zipper" ? (
+                                        <select
+                                          value={item.subType || "concealed"}
+                                          onChange={(e) =>
+                                            handleUpdateTrimItem(
+                                              item.id,
+                                              "subType",
+                                              e.target.value,
+                                            )
+                                          }
+                                          className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-semibold text-[#17202d] bg-white outline-none focus:border-[#c58b4b]"
+                                        >
+                                          <option value="concealed">concealed</option>
+                                          <option value="cfc">cfc</option>
+                                        </select>
+                                      ) : item.type === "button" ? (
+                                        <select
+                                          value={item.subType || "plastic button"}
+                                          onChange={(e) =>
+                                            handleUpdateTrimItem(
+                                              item.id,
+                                              "subType",
+                                              e.target.value,
+                                            )
+                                          }
+                                          className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-semibold text-[#17202d] bg-white outline-none focus:border-[#c58b4b]"
+                                        >
+                                          <option value="metal button">metal button</option>
+                                          <option value="plastic button">plastic button</option>
+                                          <option value="fabric button">fabric button</option>
+                                        </select>
+                                      ) : item.type === "fusing" ? (
+                                        <select
+                                          value={item.subType || "low"}
+                                          onChange={(e) =>
+                                            handleUpdateTrimItem(
+                                              item.id,
+                                              "subType",
+                                              e.target.value,
+                                            )
+                                          }
+                                          className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-semibold text-[#17202d] bg-white outline-none focus:border-[#c58b4b]"
+                                        >
+                                          <option value="low">low</option>
+                                          <option value="high">high</option>
+                                        </select>
+                                      ) : (
+                                        <div className="px-2 py-1.5 text-xs text-gray-400 italic bg-gray-50/60 rounded-lg border border-dashed border-gray-200 text-center">
+                                          —
+                                        </div>
+                                      )}
                                     </td>
 
                                     {/* 2. <name> raw text field */}
@@ -5231,7 +5285,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                           activeInspectedDeadSku.onHandQty,
                         )
                       }
-                      className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold rounded-xl shadow-xs transition active:scale-95 flex items-center gap-2 cursor-pointer whitespace-nowrap"
+                      className="px-4 py-2.5 bg-linear-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold rounded-xl shadow-xs transition active:scale-95 flex items-center gap-2 cursor-pointer whitespace-nowrap"
                     >
                       <Sparkles className="w-4 h-4 text-emerald-200" />
                       <span>
@@ -6569,7 +6623,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                       <div className="flex items-center justify-between">
                         <div>
                           <span className="text-xs font-bold text-[#17202d]">
-                            Making Cost Target Limit
+                            Making Cost Target Limit (Vendors)
                           </span>
                           <p className="text-[10px] text-[#748092]">
                             Maximum allowable % of MRP
@@ -6871,13 +6925,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                       apply company-wide in real-time.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleResetGarmentCategories}
-                    className="text-xs font-semibold text-[#566273] hover:text-[#17202d] underline self-start sm:self-auto"
-                  >
-                    Reset 
-                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
