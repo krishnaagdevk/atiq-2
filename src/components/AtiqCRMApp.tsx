@@ -27,6 +27,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Info,
+  Download,
   Percent,
   Building2,
   Calendar,
