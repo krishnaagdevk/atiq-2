@@ -536,12 +536,31 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     - Persisted via `revivedFromSku`, `revivedFromQty`, `isRevivedVersion`, and `revivalNotes` across MongoDB (`Product.ts`), TypeScript types (`types.ts`), server actions (`crm.ts`), and UI views (Style Catalog, Costing Studio banner, and Revival Directory).
     - Dual launch options: **"✨ Save & Launch Revived SKU"** (instantly persists product and generates a 50-piece production batch) or **"Edit in Costing Studio"** (pre-fills all copied BOM lines and opens Costing Studio for detailed tailoring customization).
     - Integrated direct **"Revive SKU"** shortcut buttons into the Dead Stock Risk (`liquidation`) table.
-- **Conditional Secondary Dropdowns in Trims & Materials BOM Table**:
-  - Added conditional secondary variant/sub-type dropdowns right after the `Item Type` column:
+- **Dynamic Trims & Materials BOM Table Variants & Inputs**:
+  - Added conditional secondary variant/sub-type controls right after the `Item Type` column:
     - **`zipper`**: Secondary dropdown with `concealed` & `cfc`.
     - **`button`**: Secondary dropdown with `metal button`, `plastic button`, `fabric button`.
     - **`fusing`**: Secondary dropdown with `low`, `high`.
-    - **Other types (`fabric`, `lining`, `eyehook`, `shoulder pad`)**: Clean neutral placeholder (`—`) preserving column grid alignment.
+    - **`lining`**: Direct text box input (`e.g. Astra / Voile`) to enter custom lining spec.
+    - **`eyehook`**: Direct text box input (`e.g. Pant Hook, Eyelet`) to enter custom closure spec.
+    - **Other types (`fabric`, `shoulder pad`)**: Clean neutral placeholder (`—`) preserving column grid alignment.
+  - Automatic default assignment on type selection (`zipper` -> `concealed`, `button` -> `plastic button`, `fusing` -> `low`).
+  - Added `subType?: string` to `TrimRowItem` in `src/lib/types.ts` and updated handler `handleUpdateTrimItem` to support `subType`.
+  - Added `shoulder pad` to the `Item Type` dropdown options.
+- **Support Text Polish into Interactive `(i)` Info Popovers (Settings & Costing Studio)**:
+  - Replaced cluttering static support text with interactive, accessible `(i)` info buttons and floating popover cards:
+    - **Active Garment Categories Header**: Added `(i)` info button next to `Active Garment Categories ({count})` with a floating popover explaining category synchronization across studios and BOM templates; removed raw helper text `<p>` from below the add form.
+    - **Trims & Accessories Standard Specification Header (Settings)**: Added `(i)` info button on the specification card header displaying the factory manufacturing guidelines and Costing Studio auto-fill tip; removed redundant paragraphs to make the 4 spec cards clean and prominent.
+    - **Costing Studio Trims Header**: Added matching `(i)` info button with full trims breakdown tips (Zippers, Buttons, Fusing, Shoulder Pads, Eye Hooks) directly in the BOM table header.
+    - Supported dual interaction modes: smooth hover preview on desktop and click-to-toggle with close button on mobile touch devices.
+- **Dynamic Trims & Materials BOM Table Variants & Inputs**:
+  - Added conditional secondary variant/sub-type controls right after the `Item Type` column:
+    - **`zipper`**: Secondary dropdown with `concealed` & `cfc`.
+    - **`button`**: Secondary dropdown with `metal button`, `plastic button`, `fabric button`.
+    - **`fusing`**: Secondary dropdown with `low`, `high`.
+    - **`lining`**: Direct text box input (`e.g. Astra / Voile`) to enter custom lining spec.
+    - **`eyehook`**: Direct text box input (`e.g. Pant Hook, Eyelet`) to enter custom closure spec.
+    - **Other types (`fabric`, `shoulder pad`)**: Clean neutral placeholder (`—`) preserving column grid alignment.
   - Automatic default assignment on type selection (`zipper` -> `concealed`, `button` -> `plastic button`, `fusing` -> `low`).
   - Added `subType?: string` to `TrimRowItem` in `src/lib/types.ts` and updated handler `handleUpdateTrimItem` to support `subType`.
   - Added `shoulder pad` to the `Item Type` dropdown options.

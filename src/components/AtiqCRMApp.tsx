@@ -135,7 +135,7 @@ const DEFAULT_TRIM_ROW_ITEMS: TrimRowItem[] = [
   {
     id: "trim-4",
     type: "eyehook",
-    subType: "",
+    subType: "Hook & Bar",
     name: "Hook & Bar",
     quantity: 1,
     price: 2,
@@ -461,8 +461,9 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
   });
 
   // Dead SKU Inspection & Revival Wizard State
-  const [selectedDeadSkuForDetails, setSelectedDeadSkuForDetails] =
-    useState<string | null>(null);
+  const [selectedDeadSkuForDetails, setSelectedDeadSkuForDetails] = useState<
+    string | null
+  >(null);
   const [showRevivalModal, setShowRevivalModal] = useState(false);
   const [revivalForm, setRevivalForm] = useState({
     originSku: "",
@@ -550,7 +551,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       });
     }
   };
-
 
   // Render standardized batch status badge with interactive 'i' info trigger
   const renderBatchStatusBadge = (status: ProductionBatch["status"]) => {
@@ -653,6 +653,8 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
             if (value === "zipper") next.subType = "concealed";
             else if (value === "button") next.subType = "plastic button";
             else if (value === "fusing") next.subType = "low";
+            else if (value === "lining" || value === "eyehook")
+              next.subType = "";
             else next.subType = "";
           }
           return next;
@@ -1602,10 +1604,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       b.status === "Dead stock",
   );
   const atRiskQty = atRiskBatches.reduce((acc, b) => acc + b.onHandQty, 0);
-  const atRiskVal = atRiskBatches.reduce(
-    (acc, b) => acc + b.blockedCapital,
-    0,
-  );
+  const atRiskVal = atRiskBatches.reduce((acc, b) => acc + b.blockedCapital, 0);
 
   // Aggregated Dead & At-Risk SKUs for Inspection & Revival Studio
   const deadSkusList = useMemo(() => {
@@ -1753,20 +1752,43 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       const wb = XLSX.utils.book_new();
 
       // 1. P&L Executive Summary Sheet
-      const netDeliveredGarments = batches.reduce((a, b) => a + b.netSoldQty, 0);
+      const netDeliveredGarments = batches.reduce(
+        (a, b) => a + b.netSoldQty,
+        0,
+      );
       const summaryData = [
         ["Generated On", new Date().toLocaleString("en-IN")],
         ["Reporting Period", currentMonthYearName],
         [],
         ["EXECUTIVE METRICS", "VALUE", "NOTES"],
-        ["Net Delivered Garments", netDeliveredGarments, "Garments kept by end customers"],
-        ["Total Product Gross Margin (CM2)", totalProductGrossCM2, "Delivered units gross contribution before factory overheads"],
-        ["Fixed Factory Overhead Burn", totalMonthlyOverheads, "Salaries, Rent, Power & Misc"],
-        ["True Net Factory Profit", trueNetProfit, trueNetProfit >= 0 ? "Cash Surplus ✓" : "Factory in Net Burn ⚠"],
+        [
+          "Net Delivered Garments",
+          netDeliveredGarments,
+          "Garments kept by end customers",
+        ],
+        [
+          "Total Product Gross Margin (CM2)",
+          totalProductGrossCM2,
+          "Delivered units gross contribution before factory overheads",
+        ],
+        [
+          "Fixed Factory Overhead Burn",
+          totalMonthlyOverheads,
+          "Salaries, Rent, Power & Misc",
+        ],
+        [
+          "True Net Factory Profit",
+          trueNetProfit,
+          trueNetProfit >= 0 ? "Cash Surplus ✓" : "Factory in Net Burn ⚠",
+        ],
         [],
         ["SALES & REVENUE SUMMARY", "VALUE", "NOTES"],
         ["Gross Sales Revenue", totalGrossRevenue, "Total sales value booked"],
-        ["Return Deductions & Logistics", totalReturnDeduction, "Returns, RTO losses & reverse shipping"],
+        [
+          "Return Deductions & Logistics",
+          totalReturnDeduction,
+          "Returns, RTO losses & reverse shipping",
+        ],
         ["Net Revenue Realised", totalNetRevenue, "Final realised revenue"],
         ["Total Units Sold", totalUnitsSold, "Volume sold in selected period"],
         [],
@@ -1988,7 +2010,9 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       {/* Sidebar Navigation */}
       <aside
         className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#111c2d] text-white flex flex-col transition-transform duration-200 ${
-          mobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          mobileMenuOpen
+            ? "translate-x-0"
+            : "-translate-x-full md:translate-x-0"
         }`}
       >
         {/* Brand Header */}
@@ -2947,7 +2971,9 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                           <div className="relative inline-block group">
                             <button
                               type="button"
-                              onClick={() => setShowCostingTrimsInfo((prev) => !prev)}
+                              onClick={() =>
+                                setShowCostingTrimsInfo((prev) => !prev)
+                              }
                               className="p-0.5 text-[#748092] hover:text-[#c58b4b] hover:bg-amber-50 rounded-full transition-colors cursor-pointer inline-flex items-center justify-center"
                               title="Trims Specification Guide"
                             >
@@ -2980,10 +3006,23 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                                 Standard factory component specifications:
                               </p>
                               <ul className="text-[10px] text-[#748092] space-y-1 pt-1 border-t border-gray-100 list-disc pl-3.5">
-                                <li><strong>Zipper:</strong> CFC (continuous coil for pants/jackets) vs Concealed (invisible for dresses)</li>
-                                <li><strong>Button:</strong> Metal, plastic, or fabric buttons</li>
-                                <li><strong>Fusing:</strong> Low vs High collar/cuff bukram & lining</li>
-                                <li><strong>Eye Hook & Shoulder Pad:</strong> Pant hooks, bar, and poly pads</li>
+                                <li>
+                                  <strong>Zipper:</strong> CFC (continuous coil
+                                  for pants/jackets) vs Concealed (invisible for
+                                  dresses)
+                                </li>
+                                <li>
+                                  <strong>Button:</strong> Metal, plastic, or
+                                  fabric buttons
+                                </li>
+                                <li>
+                                  <strong>Fusing:</strong> Low vs High
+                                  collar/cuff bukram & lining
+                                </li>
+                                <li>
+                                  <strong>Eye Hook & Shoulder Pad:</strong> Pant
+                                  hooks, bar, and poly pads
+                                </li>
                               </ul>
                             </div>
                           </div>
@@ -3000,11 +3039,19 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                             <thead>
                               <tr className="border-b border-[#e7eaf0] text-[#748092] text-[10px] font-bold uppercase tracking-wider">
                                 <th className="py-2 px-2.5 w-32">Item Type</th>
-                                <th className="py-2 px-2.5 w-36">Option / Sub-Type</th>
-                                <th className="py-2 px-2.5">Name / Description</th>
-                                <th className="py-2 px-2.5 w-28">Quantity Use</th>
+                                <th className="py-2 px-2.5 w-36">
+                                  Option / Sub-Type
+                                </th>
+                                <th className="py-2 px-2.5">
+                                  Name / Description
+                                </th>
+                                <th className="py-2 px-2.5 w-28">
+                                  Quantity Use
+                                </th>
                                 <th className="py-2 px-2.5 w-28">Price (₹)</th>
-                                <th className="py-2 px-2.5 w-24 text-right">Row Cost</th>
+                                <th className="py-2 px-2.5 w-24 text-right">
+                                  Row Cost
+                                </th>
                                 <th className="py-2 px-2 w-10 text-center"></th>
                               </tr>
                             </thead>
@@ -3037,7 +3084,9 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                                         <option value="fusing">fusing</option>
                                         <option value="lining">lining</option>
                                         <option value="eyehook">eyehook</option>
-                                        <option value="shoulder pad">shoulder pad</option>
+                                        <option value="shoulder pad">
+                                          shoulder pad
+                                        </option>
                                       </select>
                                     </td>
 
@@ -3055,12 +3104,16 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                                           }
                                           className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-semibold text-[#17202d] bg-white outline-none focus:border-[#c58b4b]"
                                         >
-                                          <option value="concealed">concealed</option>
+                                          <option value="concealed">
+                                            concealed
+                                          </option>
                                           <option value="cfc">cfc</option>
                                         </select>
                                       ) : item.type === "button" ? (
                                         <select
-                                          value={item.subType || "plastic button"}
+                                          value={
+                                            item.subType || "plastic button"
+                                          }
                                           onChange={(e) =>
                                             handleUpdateTrimItem(
                                               item.id,
@@ -3070,9 +3123,15 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                                           }
                                           className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-semibold text-[#17202d] bg-white outline-none focus:border-[#c58b4b]"
                                         >
-                                          <option value="metal button">metal button</option>
-                                          <option value="plastic button">plastic button</option>
-                                          <option value="fabric button">fabric button</option>
+                                          <option value="metal button">
+                                            metal button
+                                          </option>
+                                          <option value="plastic button">
+                                            plastic button
+                                          </option>
+                                          <option value="fabric button">
+                                            fabric button
+                                          </option>
                                         </select>
                                       ) : item.type === "fusing" ? (
                                         <select
@@ -3089,6 +3148,34 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                                           <option value="low">low</option>
                                           <option value="high">high</option>
                                         </select>
+                                      ) : item.type === "lining" ? (
+                                        <input
+                                          type="text"
+                                          value={item.subType || ""}
+                                          onChange={(e) =>
+                                            handleUpdateTrimItem(
+                                              item.id,
+                                              "subType",
+                                              e.target.value,
+                                            )
+                                          }
+                                          placeholder="e.g. Astra / Voile"
+                                          className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium text-[#17202d] bg-white outline-none focus:border-[#c58b4b]"
+                                        />
+                                      ) : item.type === "eyehook" ? (
+                                        <input
+                                          type="text"
+                                          value={item.subType || ""}
+                                          onChange={(e) =>
+                                            handleUpdateTrimItem(
+                                              item.id,
+                                              "subType",
+                                              e.target.value,
+                                            )
+                                          }
+                                          placeholder="e.g. Pant Hook, Eyelet"
+                                          className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium text-[#17202d] bg-white outline-none focus:border-[#c58b4b]"
+                                        />
                                       ) : (
                                         <div className="px-2 py-1.5 text-xs text-gray-400 italic bg-gray-50/60 rounded-lg border border-dashed border-gray-200 text-center">
                                           —
@@ -3617,7 +3704,10 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     <div className="flex items-center justify-between border-b border-[#e7eaf0] pb-2">
                       <h4 className="font-bold text-xs uppercase tracking-wider text-[#17202d] flex items-center gap-1.5">
                         <TrendingUp className="w-3.5 h-3.5 text-[#c58b4b]" />
-                        <span>Batch Production Return ({costForm.productionRunQty} pcs)</span>
+                        <span>
+                          Batch Production Return ({costForm.productionRunQty}{" "}
+                          pcs)
+                        </span>
                       </h4>
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
@@ -3651,9 +3741,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                         </span>
                         <span
                           className={`text-sm sm:text-base font-black mt-0.5 block ${
-                            liveEco.cm3 >= 0
-                              ? "text-[#16835d]"
-                              : "text-red-600"
+                            liveEco.cm3 >= 0 ? "text-[#16835d]" : "text-red-600"
                           }`}
                         >
                           {formatINR(liveEco.cm3 * costForm.productionRunQty)}
@@ -5235,7 +5323,8 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     Dead SKUs &amp; Revival Studio
                   </h2>
                   <p className="text-xs text-[#748092]">
-                    Inspect stuck inventory and recreate dead pieces into profitable new SKU versions with origin tracking.
+                    Inspect stuck inventory and recreate dead pieces into
+                    profitable new SKU versions with origin tracking.
                   </p>
                 </div>
 
@@ -5318,12 +5407,14 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                           {activeInspectedDeadSku.category}
                         </span>
                         <h3 className="font-bold text-base text-[#17202d]">
-                          {activeInspectedDeadSku.sku} — {activeInspectedDeadSku.productName}
+                          {activeInspectedDeadSku.sku} —{" "}
+                          {activeInspectedDeadSku.productName}
                         </h3>
                         {renderBatchStatusBadge(activeInspectedDeadSku.status)}
                       </div>
                       <p className="text-xs text-[#748092] mt-0.5">
-                        Deep SKU inspection: review original BOM, costs, and stuck units before recreation.
+                        Deep SKU inspection: review original BOM, costs, and
+                        stuck units before recreation.
                       </p>
                     </div>
 
@@ -5338,7 +5429,8 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     >
                       <Sparkles className="w-4 h-4 text-emerald-200" />
                       <span>
-                        Recreate &amp; Revive ({activeInspectedDeadSku.onHandQty} pcs)
+                        Recreate &amp; Revive (
+                        {activeInspectedDeadSku.onHandQty} pcs)
                       </span>
                     </button>
                   </div>
@@ -5365,7 +5457,10 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                         {formatINR(activeInspectedDeadSku.blockedCapital)}
                       </div>
                       <span className="text-[10px] text-[#748092]">
-                        Unit COGS: {formatINR(activeInspectedDeadSku.product?.totalCogs || 0)}
+                        Unit COGS:{" "}
+                        {formatINR(
+                          activeInspectedDeadSku.product?.totalCogs || 0,
+                        )}
                       </span>
                     </div>
 
@@ -5377,7 +5472,11 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                         {activeInspectedDeadSku.fabricType}
                       </div>
                       <span className="text-[10px] text-[#748092]">
-                        {activeInspectedDeadSku.product?.fabricQty || 1.35}m @ {formatINR(activeInspectedDeadSku.product?.fabricRate || 180)}/m
+                        {activeInspectedDeadSku.product?.fabricQty || 1.35}m @{" "}
+                        {formatINR(
+                          activeInspectedDeadSku.product?.fabricRate || 180,
+                        )}
+                        /m
                       </span>
                     </div>
 
@@ -5389,7 +5488,8 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                         Upcycle to New Style
                       </div>
                       <span className="text-[10px] text-emerald-700">
-                        Remake {activeInspectedDeadSku.onHandQty} pcs to recover cash
+                        Remake {activeInspectedDeadSku.onHandQty} pcs to recover
+                        cash
                       </span>
                     </div>
                   </div>
@@ -5399,10 +5499,17 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     <div className="space-y-0.5">
                       <span className="font-bold text-[#17202d] flex items-center gap-1.5">
                         <RefreshCw className="w-3.5 h-3.5 text-[#c58b4b]" />
-                        <span>Factory Rework Strategy for {activeInspectedDeadSku.sku}:</span>
+                        <span>
+                          Factory Rework Strategy for{" "}
+                          {activeInspectedDeadSku.sku}:
+                        </span>
                       </span>
                       <p className="text-[#566273] text-[11px]">
-                        Instead of writing off {activeInspectedDeadSku.onHandQty} pieces for zero salvage, the tailoring team can alter sleeves, attach contrasting trims or lace, adjust necklines, or overdye to launch a brand new high-margin SKU.
+                        Instead of writing off{" "}
+                        {activeInspectedDeadSku.onHandQty} pieces for zero
+                        salvage, the tailoring team can alter sleeves, attach
+                        contrasting trims or lace, adjust necklines, or overdye
+                        to launch a brand new high-margin SKU.
                       </p>
                     </div>
 
@@ -5442,7 +5549,9 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     <thead>
                       <tr className="border-b border-[#e7eaf0] text-[#748092] text-[10px] font-bold uppercase tracking-wider">
                         <th className="py-2.5 px-3">Dead SKU</th>
-                        <th className="py-2.5 px-3">Style Name &amp; Category</th>
+                        <th className="py-2.5 px-3">
+                          Style Name &amp; Category
+                        </th>
                         <th className="py-2.5 px-3">Stuck Pieces</th>
                         <th className="py-2.5 px-3">Age in Days</th>
                         <th className="py-2.5 px-3">Blocked Capital</th>
@@ -5457,9 +5566,13 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                         return (
                           <tr
                             key={item.sku}
-                            onClick={() => setSelectedDeadSkuForDetails(item.sku)}
+                            onClick={() =>
+                              setSelectedDeadSkuForDetails(item.sku)
+                            }
                             className={`cursor-pointer transition ${
-                              isSelected ? "bg-amber-50/50" : "hover:bg-gray-50/80"
+                              isSelected
+                                ? "bg-amber-50/50"
+                                : "hover:bg-gray-50/80"
                             }`}
                           >
                             <td className="py-3 px-3">
@@ -5492,14 +5605,19 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                               onClick={(e) => e.stopPropagation()}
                             >
                               <button
-                                onClick={() => setSelectedDeadSkuForDetails(item.sku)}
+                                onClick={() =>
+                                  setSelectedDeadSkuForDetails(item.sku)
+                                }
                                 className="text-xs font-semibold text-[#748092] hover:text-[#17202d] hover:underline cursor-pointer"
                               >
                                 Inspect
                               </button>
                               <button
                                 onClick={() =>
-                                  handleOpenRevivalModal(item.sku, item.onHandQty)
+                                  handleOpenRevivalModal(
+                                    item.sku,
+                                    item.onHandQty,
+                                  )
                                 }
                                 className="px-3 py-1.5 bg-[#edf7f2] hover:bg-[#d8efe2] text-[#16835d] text-xs font-bold rounded-lg border border-[#16835d]/20 transition inline-flex items-center gap-1 cursor-pointer"
                               >
@@ -5528,7 +5646,8 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     </p>
                   </div>
                   <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
-                    {products.filter((p) => p.isRevivedVersion).length} Revived Styles
+                    {products.filter((p) => p.isRevivedVersion).length} Revived
+                    Styles
                   </span>
                 </div>
 
@@ -5536,7 +5655,12 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                   <div className="text-center py-8 text-xs text-[#748092] bg-gray-50 rounded-xl border border-dashed border-gray-200">
                     <p>No revived versions created yet.</p>
                     <p className="mt-1">
-                      Click <strong className="text-[#17202d]">&quot;Revive&quot;</strong> on any dead SKU above to remake stuck pieces into a new version.
+                      Click{" "}
+                      <strong className="text-[#17202d]">
+                        &quot;Revive&quot;
+                      </strong>{" "}
+                      on any dead SKU above to remake stuck pieces into a new
+                      version.
                     </p>
                   </div>
                 ) : (
@@ -5839,7 +5963,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                       onClick={handleAddReturn}
                       className="w-full py-2 bg-[#111c2d] hover:bg-[#1f2f47] text-white text-xs font-bold rounded-lg shadow-sm"
                     >
-                      + Save Return
+                      Save Return
                     </button>
                   </div>
                 </div>
@@ -6218,7 +6342,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                       onClick={handleAddExpense}
                       className="w-full py-2 bg-[#111c2d] hover:bg-[#1f2f47] text-white text-xs font-bold rounded-lg shadow-sm"
                     >
-                      + Save Expense
+                      Save Expense
                     </button>
                   </div>
                 </div>
@@ -7019,11 +7143,17 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                               </button>
                             </div>
                             <p className="text-[11px] text-[#566273] leading-relaxed">
-                              Added categories instantly appear in Costing Studio, Batch Production, Inventory, and Style Catalog, and link to automated trims recommendations.
+                              Added categories instantly appear in Costing
+                              Studio, Batch Production, Inventory, and Style
+                              Catalog, and link to automated trims
+                              recommendations.
                             </p>
                             <div className="pt-1.5 border-t border-gray-100 text-[10px] text-emerald-700 font-medium flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-                              <span>Config-controlled & synced across all studios in real-time</span>
+                              <span>
+                                Config-controlled & synced across all studios in
+                                real-time
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -7114,11 +7244,19 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                             </button>
                           </div>
                           <p className="text-[11px] text-[#566273] leading-relaxed">
-                            Per manufacturing guidelines, Trims are divided into 5 standard components with automated dropdown selection in Costing Studio.
+                            Per manufacturing guidelines, Trims are divided into
+                            5 standard components with automated dropdown
+                            selection in Costing Studio.
                           </p>
                           <div className="pt-1.5 border-t border-gray-100 text-[10px] text-[#748092] flex items-center gap-1">
-                            <span className="text-[#c58b4b] font-bold">💡 Tip:</span>
-                            <span>In Costing Studio, select the Trims Type (Dropdown) to auto-fill benchmark rates for each garment style.</span>
+                            <span className="text-[#c58b4b] font-bold">
+                              💡 Tip:
+                            </span>
+                            <span>
+                              In Costing Studio, select the Trims Type
+                              (Dropdown) to auto-fill benchmark rates for each
+                              garment style.
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -7522,7 +7660,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
             {/* Header */}
             <div className="flex items-start justify-between border-b border-[#e7eaf0] pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-linear-to-br from-amber-500 to-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -7551,7 +7689,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
             </div>
 
             {/* Permanent Origin Tag Preview */}
-            <div className="bg-gradient-to-r from-amber-50 via-emerald-50 to-amber-50 border border-amber-200 rounded-xl p-3.5 space-y-1">
+            <div className="bg-linear-to-r from-amber-50 via-emerald-50 to-amber-50 border border-amber-200 rounded-xl p-3.5 space-y-1">
               <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                 <span>Mandatory Origin Tag for New SKU</span>
@@ -7596,7 +7734,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     Pieces to Recreate / Remake *
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     value={revivalForm.piecesAvailable}
                     onChange={(e) =>
                       setRevivalForm({
@@ -7636,7 +7774,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     Additional Rework Cost (₹/pc)
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     value={revivalForm.reworkAdditionalCost}
                     onChange={(e) =>
                       setRevivalForm({
@@ -7657,7 +7795,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     New Target MRP (₹)
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     value={revivalForm.newMrp}
                     onChange={(e) =>
                       setRevivalForm({
@@ -7715,7 +7853,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                 <button
                   type="button"
                   onClick={handleInstantSaveRevivedSku}
-                  className="flex-1 sm:flex-initial px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold rounded-xl shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap"
+                  className="flex-1 sm:flex-initial px-4 py-2 bg-linear-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold rounded-xl shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap"
                 >
                   ✨ Save &amp; Launch Revived SKU
                 </button>
