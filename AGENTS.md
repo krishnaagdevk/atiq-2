@@ -509,3 +509,4 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     2. **Sheet 2: "SKU Profitability"**: SKU-wise economics breakdown (SKU, Style Name, Category, MRP, COGS, CM1, CM2, CM3, Margin %, and Profitability Status).
     3. **Sheet 3: "Factory Overheads"**: Overhead logs with category, description, vendor, amount (₹), and recurrence status.
   - Replaced the single "Print / Export" button in the P&L tab with an "Export to Excel (.xlsx)" primary button (with emerald spreadsheet icon) alongside a secondary "Print" button.
+  - Preserved `Download` icon in `lucide-react` import bundle to prevent Turbopack client HMR chunk resolution errors from stale browser caches.
