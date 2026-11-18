@@ -1300,7 +1300,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       // 1. P&L Executive Summary Sheet
       const netDeliveredGarments = batches.reduce((a, b) => a + b.netSoldQty, 0);
       const summaryData = [
-        ["ATIQ STUDIO - PROFIT & LOSS (P&L) REPORT"],
         ["Generated On", new Date().toLocaleString("en-IN")],
         ["Reporting Period", currentMonthYearName],
         [],
@@ -3792,15 +3791,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     title="Export complete Profit & Loss report to Excel (.xlsx)"
                   >
                     <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
-                    <span>Export to Excel (.xlsx)</span>
-                  </button>
-                  <button
-                    onClick={() => window.print()}
-                    className="px-3 py-2 bg-white border border-[#e7eaf0] text-xs font-semibold rounded-xl text-[#17202d] hover:bg-gray-50 flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                    title="Print or Save as PDF"
-                  >
-                    <Printer className="w-3.5 h-3.5 text-gray-500" />
-                    <span>Print</span>
+                    <span>Export to Excel</span>
                   </button>
                 </div>
               </div>
