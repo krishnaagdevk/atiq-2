@@ -168,6 +168,10 @@ export async function getInitialData(): Promise<{
       cm2: p.cm2,
       cm3: p.cm3,
       status: p.status,
+      revivedFromSku: p.revivedFromSku || undefined,
+      revivedFromQty: p.revivedFromQty || undefined,
+      isRevivedVersion: Boolean(p.isRevivedVersion),
+      revivalNotes: p.revivalNotes || undefined,
     }));
 
     const formattedBatches: ProductionBatch[] = dbBatches.map((b: any) => ({

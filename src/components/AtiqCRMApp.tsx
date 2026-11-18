@@ -42,6 +42,8 @@ import {
   Tag,
   FileSpreadsheet,
   Printer,
+  Sparkles,
+  RefreshCw,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 
@@ -448,6 +450,37 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       config.defaultExpectedReturnsPct ||
       10,
     productionRunQty: 100,
+    revivedFromSku: activeProduct?.revivedFromSku || "",
+    revivedFromQty: activeProduct?.revivedFromQty || 0,
+    isRevivedVersion: Boolean(activeProduct?.isRevivedVersion),
+    revivalNotes: activeProduct?.revivalNotes || "",
+  });
+
+  // Dead SKU Inspection & Revival Wizard State
+  const [selectedDeadSkuForDetails, setSelectedDeadSkuForDetails] =
+    useState<string | null>(null);
+  const [showRevivalModal, setShowRevivalModal] = useState(false);
+  const [revivalForm, setRevivalForm] = useState({
+    originSku: "",
+    originName: "",
+    originCategory: "Westernwear",
+    originFabricType: "100% Cotton",
+    originFabricQty: 1.35,
+    originFabricRate: 180,
+    originTrimsCost: 24,
+    originCuttingCost: 18,
+    originStitchingCost: 42,
+    originFinishingCost: 12,
+    originPackagingCost: 14,
+    originOtherCost: 0,
+    originMrp: 1499,
+    originTrimItems: [] as TrimRowItem[],
+    piecesAvailable: 50,
+    newSku: "",
+    newName: "",
+    reworkAdditionalCost: 35,
+    newMrp: 1499,
+    revivalNotes: "",
   });
 
   // Dead Stock Policy and Info Modal State
@@ -947,6 +980,10 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
         targetCogsPct: p.targetCogsPct,
         expectedReturnsPct: p.expectedReturnsPct,
         productionRunQty: 100,
+        revivedFromSku: p.revivedFromSku || "",
+        revivedFromQty: p.revivedFromQty || 0,
+        isRevivedVersion: Boolean(p.isRevivedVersion),
+        revivalNotes: p.revivalNotes || "",
       });
     }
   };
@@ -981,6 +1018,10 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       targetCogsPct: config.defaultTargetCogsPct || 20,
       expectedReturnsPct: config.defaultExpectedReturnsPct || 10,
       productionRunQty: 100,
+      revivedFromSku: "",
+      revivedFromQty: 0,
+      isRevivedVersion: false,
+      revivalNotes: "",
     });
     setSelectedSku(newSku);
     setActiveTab("costing");
@@ -1030,6 +1071,16 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       cm2: liveEco.cm2,
       cm3: liveEco.cm3,
       status: "Active",
+      revivedFromSku: costForm.isRevivedVersion
+        ? costForm.revivedFromSku
+        : undefined,
+      revivedFromQty: costForm.isRevivedVersion
+        ? Number(costForm.revivedFromQty)
+        : undefined,
+      isRevivedVersion: Boolean(costForm.isRevivedVersion),
+      revivalNotes: costForm.isRevivedVersion
+        ? costForm.revivalNotes
+        : undefined,
     };
 
     const res = await saveProductAction(newProd);
@@ -1065,6 +1116,187 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       showToast(`Style ${sku} deleted.`);
     } else {
       showToast("Failed to delete style.", "error");
+    }
+  };
+
+  // Open Revival Modal for a Dead SKU
+  const handleOpenRevivalModal = (skuId: string, customQty?: number) => {
+    const p = products.find((prod) => prod.sku === skuId);
+    const relatedBatches = batches.filter(
+      (b) => b.sku === skuId && b.status !== "Active",
+    );
+    const totalDeadPieces =
+      customQty ??
+      (relatedBatches.reduce((acc, b) => acc + b.onHandQty, 0) || 50);
+
+    const baseName =
+      p?.name || relatedBatches[0]?.productName || "Garment Style";
+    const suggestedNewSku = `${skuId}-REV`;
+    const suggestedNewName = `${baseName} (Revived Remake)`;
+
+    setRevivalForm({
+      originSku: skuId,
+      originName: baseName,
+      originCategory: p?.category || "Westernwear",
+      originFabricType: p?.fabricType || "100% Cotton",
+      originFabricQty: p?.fabricQty || 1.35,
+      originFabricRate: p?.fabricRate || 180,
+      originTrimsCost: p?.trimsCost || 24,
+      originCuttingCost: p?.cuttingCost || 18,
+      originStitchingCost: p?.stitchingCost || 42,
+      originFinishingCost: p?.finishingCost || 12,
+      originPackagingCost: p?.packagingCost || 14,
+      originOtherCost: p?.otherCost || 0,
+      originMrp: p?.mrp || 1499,
+      originTrimItems:
+        p?.trimItems && p.trimItems.length > 0
+          ? [...p.trimItems]
+          : [...DEFAULT_TRIM_ROW_ITEMS],
+      piecesAvailable: totalDeadPieces,
+      newSku: suggestedNewSku,
+      newName: suggestedNewName,
+      reworkAdditionalCost: 35,
+      newMrp: p?.mrp || 1499,
+      revivalNotes: `Recreated ${totalDeadPieces} pieces from dead stock ${skuId} with updated trims and design overhaul.`,
+    });
+    setShowRevivalModal(true);
+  };
+
+  // Launch and customize in Costing Studio
+  const handleReviveInCostingStudio = () => {
+    if (!revivalForm.newSku.trim() || !revivalForm.newName.trim()) {
+      showToast("Please provide both New SKU ID and Style Name.", "error");
+      return;
+    }
+
+    setCostForm((prev) => ({
+      ...prev,
+      sku: revivalForm.newSku.trim().toUpperCase(),
+      name: revivalForm.newName.trim(),
+      category: revivalForm.originCategory,
+      fabricType: revivalForm.originFabricType,
+      fabricQty: revivalForm.originFabricQty,
+      fabricRate: revivalForm.originFabricRate,
+      trimsCost: revivalForm.originTrimsCost,
+      trimItems: revivalForm.originTrimItems,
+      cuttingCost: revivalForm.originCuttingCost,
+      stitchingCost: revivalForm.originStitchingCost,
+      finishingCost: revivalForm.originFinishingCost,
+      packagingCost: revivalForm.originPackagingCost,
+      otherCost: Number(revivalForm.reworkAdditionalCost) || 0,
+      mrp: Number(revivalForm.newMrp) || revivalForm.originMrp,
+      productionRunQty: Number(revivalForm.piecesAvailable) || 50,
+      isRevivedVersion: true,
+      revivedFromSku: revivalForm.originSku,
+      revivedFromQty: Number(revivalForm.piecesAvailable) || 50,
+      revivalNotes: revivalForm.revivalNotes,
+    }));
+
+    setSelectedSku(revivalForm.newSku.trim().toUpperCase());
+    setShowRevivalModal(false);
+    setActiveTab("costing");
+    showToast(
+      `Revived SKU ${revivalForm.newSku} loaded in Costing Studio with Dead SKU tag!`,
+    );
+  };
+
+  // Instant Save and Launch Revived SKU
+  const handleInstantSaveRevivedSku = async () => {
+    if (!revivalForm.newSku.trim() || !revivalForm.newName.trim()) {
+      showToast("Please provide both New SKU ID and Style Name.", "error");
+      return;
+    }
+
+    const reworkCost = Number(revivalForm.reworkAdditionalCost) || 0;
+    const piecesQty = Number(revivalForm.piecesAvailable) || 50;
+
+    const newProd: Omit<ProductCosting, "id"> = {
+      sku: revivalForm.newSku.trim().toUpperCase(),
+      name: revivalForm.newName.trim(),
+      category: revivalForm.originCategory,
+      fabricType: revivalForm.originFabricType,
+      marketplaces: ["Myntra", "Amazon", "Flipkart", "Shopify"],
+      fabricQty: revivalForm.originFabricQty,
+      fabricRate: revivalForm.originFabricRate,
+      trimsCost: revivalForm.originTrimsCost,
+      trimItems: revivalForm.originTrimItems,
+      cuttingCost: revivalForm.originCuttingCost,
+      stitchingCost: revivalForm.originStitchingCost,
+      finishingCost: revivalForm.originFinishingCost,
+      packagingCost: revivalForm.originPackagingCost,
+      otherCost: reworkCost,
+      totalCogs:
+        revivalForm.originFabricQty * revivalForm.originFabricRate +
+        revivalForm.originTrimsCost +
+        revivalForm.originCuttingCost +
+        revivalForm.originStitchingCost +
+        revivalForm.originFinishingCost +
+        revivalForm.originPackagingCost +
+        reworkCost,
+      mrp: Number(revivalForm.newMrp) || revivalForm.originMrp,
+      discountPct: 10,
+      gstPct: 5,
+      marketplaceCommissionPct: 22.5,
+      logisticsCost: 65,
+      reverseLogisticsCost: 35,
+      marketingCost: 45,
+      pricingMultiplier: 2.0,
+      targetCogsPct: 20,
+      expectedReturnsPct: 10,
+      recommendedMrp: Number(revivalForm.newMrp) || revivalForm.originMrp,
+      cogsPct: 25,
+      cm1: (Number(revivalForm.newMrp) || 1499) * 0.85,
+      cm2: 500,
+      cm3: 390,
+      status: "Active",
+      isRevivedVersion: true,
+      revivedFromSku: revivalForm.originSku,
+      revivedFromQty: piecesQty,
+      revivalNotes: revivalForm.revivalNotes,
+    };
+
+    const res = await saveProductAction(newProd);
+    if (res.success && res.product) {
+      setProducts((prev) => {
+        const idx = prev.findIndex((p) => p.sku === res.product!.sku);
+        if (idx >= 0) {
+          const updated = [...prev];
+          updated[idx] = res.product!;
+          return updated;
+        }
+        return [res.product!, ...prev];
+      });
+
+      // Also create a fresh Production Batch for the recreated 50 pieces!
+      const newBatchId = `BATCH-${new Date().getFullYear()}-${String(batches.length + 1).padStart(3, "0")}`;
+      const batchRes = await addBatchAction({
+        id: newBatchId,
+        sku: res.product.sku,
+        productName: res.product.name,
+        producedQty: piecesQty,
+        grossSoldQty: 0,
+        returnedQty: 0,
+        netSoldQty: 0,
+        onHandQty: piecesQty,
+        ageDays: 1,
+        status: "Active",
+        unitCogs: res.product.totalCogs,
+        blockedCapital: res.product.totalCogs * piecesQty,
+        liquidationPrice: Math.round(res.product.totalCogs * 0.75),
+        productionDate: new Date().toISOString().split("T")[0],
+      });
+
+      if (batchRes.success && batchRes.batch) {
+        setBatches((prev) => [batchRes.batch!, ...prev]);
+      }
+
+      setShowRevivalModal(false);
+      showToast(
+        `🎉 Successfully created Revived SKU ${res.product.sku} (${piecesQty} pcs remade from ${revivalForm.originSku})!`,
+      );
+      setActiveTab("skus");
+    } else {
+      showToast(res.error || "Failed to save revived SKU.", "error");
     }
   };
 
@@ -1370,7 +1602,74 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       b.status === "Dead stock",
   );
   const atRiskQty = atRiskBatches.reduce((acc, b) => acc + b.onHandQty, 0);
-  const atRiskVal = atRiskBatches.reduce((acc, b) => acc + b.blockedCapital, 0);
+  const atRiskVal = atRiskBatches.reduce(
+    (acc, b) => acc + b.blockedCapital,
+    0,
+  );
+
+  // Aggregated Dead & At-Risk SKUs for Inspection & Revival Studio
+  const deadSkusList = useMemo(() => {
+    const list: {
+      sku: string;
+      productName: string;
+      category: string;
+      fabricType: string;
+      onHandQty: number;
+      blockedCapital: number;
+      ageDays: number;
+      status: ProductionBatch["status"];
+      batchIds: string[];
+      product?: ProductCosting;
+      batches: ProductionBatch[];
+    }[] = [];
+
+    const map = new Map<string, ProductionBatch[]>();
+    atRiskBatches.forEach((b) => {
+      const arr = map.get(b.sku) || [];
+      arr.push(b);
+      map.set(b.sku, arr);
+    });
+
+    map.forEach((bList, sku) => {
+      const p = products.find((prod) => prod.sku === sku);
+      const totalQty = bList.reduce((acc, b) => acc + b.onHandQty, 0);
+      const totalCap = bList.reduce((acc, b) => acc + b.blockedCapital, 0);
+      const maxAge = Math.max(...bList.map((b) => b.ageDays));
+      const worstStatus = bList.some((b) => b.status === "Dead stock")
+        ? ("Dead stock" as const)
+        : bList.some((b) => b.status === "Liquidation")
+          ? ("Liquidation" as const)
+          : ("Ageing" as const);
+
+      list.push({
+        sku,
+        productName: p?.name || bList[0]?.productName || "Unknown Style",
+        category: p?.category || "Apparel",
+        fabricType: p?.fabricType || "100% Cotton",
+        onHandQty: totalQty,
+        blockedCapital: totalCap,
+        ageDays: maxAge,
+        status: worstStatus,
+        batchIds: bList.map((b) => b.id),
+        product: p,
+        batches: bList,
+      });
+    });
+
+    return list.sort((a, b) => b.blockedCapital - a.blockedCapital);
+  }, [atRiskBatches, products]);
+
+  // Selected Dead SKU for deep details inspection
+  const activeInspectedDeadSku = useMemo(() => {
+    if (!selectedDeadSkuForDetails) {
+      return deadSkusList[0] || null;
+    }
+    return (
+      deadSkusList.find((d) => d.sku === selectedDeadSkuForDetails) ||
+      deadSkusList[0] ||
+      null
+    );
+  }, [deadSkusList, selectedDeadSkuForDetails]);
 
   const carryingRate = (config.defaultCarryingCostPct || 18) / 100;
   const monthlyBleed = Math.round((totalBlockedCapital * carryingRate) / 12);
@@ -1629,6 +1928,12 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       label: "Dead Stock Risk",
       icon: PackageX,
       tag: `${atRiskBatches.length} At Risk`,
+    },
+    {
+      id: "dead_revival",
+      label: "Dead SKU Revival",
+      icon: Sparkles,
+      tag: "Remake",
     },
     {
       id: "returns",
@@ -2374,6 +2679,36 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     </button>
                   </div>
                 </div>
+
+                {/* Revived Style Origin Banner */}
+                {costForm.isRevivedVersion && (
+                  <div className="bg-gradient-to-r from-amber-50 via-emerald-50 to-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <Sparkles className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-[#17202d] uppercase tracking-wider block">
+                          Revived Style Version (Remade from Dead Stock)
+                        </span>
+                        <p className="text-[11px] text-[#566273]">
+                          Recreated using{" "}
+                          <strong className="text-[#17202d]">
+                            {costForm.revivedFromQty} units
+                          </strong>{" "}
+                          from original Dead SKU{" "}
+                          <strong className="text-amber-900 font-mono">
+                            {costForm.revivedFromSku}
+                          </strong>
+                          .
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-bold px-3 py-1 bg-white border border-amber-300 rounded-lg text-amber-900 shrink-0">
+                      ⚡ Tag: Remade from {costForm.revivedFromSku}
+                    </span>
+                  </div>
+                )}
 
                 {/* Mobile View Switcher Tab Bar (Visible on mobile only) */}
                 <div className="flex lg:hidden bg-white border border-[#e7eaf0] rounded-2xl p-1 shadow-2xs w-full">
@@ -4744,6 +5079,16 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                             <td className="py-3 px-3 text-right space-x-2">
                               <button
                                 onClick={() =>
+                                  handleOpenRevivalModal(b.sku, b.onHandQty)
+                                }
+                                className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                                title="Recreate or revive these stuck units into a new SKU version"
+                              >
+                                <Sparkles className="w-3 h-3 text-emerald-500" />
+                                <span>Revive SKU</span>
+                              </button>
+                              <button
+                                onClick={() =>
                                   handleUpdateBatchStatus(
                                     b.id,
                                     "Liquidation",
@@ -4768,6 +5113,396 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* MODULE 7B: DEAD SKU GRAVEYARD & REVIVAL STUDIO           */}
+          {/* ======================================================== */}
+          {activeTab === "dead_revival" && (
+            <div className="space-y-6">
+              {/* Top Banner */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#c58b4b]">
+                    Stock Recovery & Re-creation
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#17202d]">
+                    Dead SKUs &amp; Revival Studio
+                  </h2>
+                  <p className="text-xs text-[#748092]">
+                    Inspect stuck inventory and recreate dead pieces into profitable new SKU versions with origin tracking.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveTab("liquidation")}
+                    className="px-3 py-2 bg-white border border-[#e7eaf0] text-xs font-semibold rounded-xl text-[#17202d] hover:bg-gray-50 flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                  >
+                    <PackageX className="w-3.5 h-3.5 text-[#c58b4b]" />
+                    <span>Dead Stock Risk</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("skus")}
+                    className="px-3.5 py-2 bg-[#111c2d] hover:bg-[#1e2f47] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+                  >
+                    <Shirt className="w-3.5 h-3.5" />
+                    <span>Style Catalog</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Top Metrics Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white border border-[#e7eaf0] rounded-2xl p-4 shadow-2xs">
+                  <span className="text-xs text-[#748092] font-semibold">
+                    Stuck Dead Units
+                  </span>
+                  <div className="text-2xl font-black text-[#c44e4e] mt-1">
+                    {atRiskQty} pcs
+                  </div>
+                  <span className="text-[11px] text-[#748092]">
+                    Available for remanufacturing
+                  </span>
+                </div>
+
+                <div className="bg-white border border-[#e7eaf0] rounded-2xl p-4 shadow-2xs">
+                  <span className="text-xs text-[#748092] font-semibold">
+                    Locked Factory Capital
+                  </span>
+                  <div className="text-2xl font-black text-[#c44e4e] mt-1">
+                    {formatINR(atRiskVal)}
+                  </div>
+                  <span className="text-[11px] text-[#748092]">
+                    Capital at risk of complete loss
+                  </span>
+                </div>
+
+                <div className="bg-white border border-[#e7eaf0] rounded-2xl p-4 shadow-2xs">
+                  <span className="text-xs text-[#748092] font-semibold">
+                    Stagnant Dead SKUs
+                  </span>
+                  <div className="text-2xl font-bold text-[#17202d] mt-1">
+                    {deadSkusList.length} Styles
+                  </div>
+                  <span className="text-[11px] text-[#748092]">
+                    Batches aged &gt;30–90 days
+                  </span>
+                </div>
+
+                <div className="bg-white border border-[#e7eaf0] rounded-2xl p-4 shadow-2xs">
+                  <span className="text-xs text-[#16835d] font-semibold">
+                    Revived SKUs Created
+                  </span>
+                  <div className="text-2xl font-black text-[#16835d] mt-1">
+                    {products.filter((p) => p.isRevivedVersion).length} Styles
+                  </div>
+                  <span className="text-[11px] text-[#16835d]">
+                    Upcycled into fresh versions ✓
+                  </span>
+                </div>
+              </div>
+
+              {/* Selected Dead SKU Detailed Inspection Card */}
+              {activeInspectedDeadSku && (
+                <div className="bg-white border border-[#e7eaf0] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e7eaf0] pb-3 gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-[#c58b4b] bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                          {activeInspectedDeadSku.category}
+                        </span>
+                        <h3 className="font-bold text-base text-[#17202d]">
+                          {activeInspectedDeadSku.sku} — {activeInspectedDeadSku.productName}
+                        </h3>
+                        {renderBatchStatusBadge(activeInspectedDeadSku.status)}
+                      </div>
+                      <p className="text-xs text-[#748092] mt-0.5">
+                        Deep SKU inspection: review original BOM, costs, and stuck units before recreation.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        handleOpenRevivalModal(
+                          activeInspectedDeadSku.sku,
+                          activeInspectedDeadSku.onHandQty,
+                        )
+                      }
+                      className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold rounded-xl shadow-xs transition active:scale-95 flex items-center gap-2 cursor-pointer whitespace-nowrap"
+                    >
+                      <Sparkles className="w-4 h-4 text-emerald-200" />
+                      <span>
+                        Recreate &amp; Revive ({activeInspectedDeadSku.onHandQty} pcs)
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Inspection Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="p-3.5 bg-red-50/60 rounded-xl border border-red-100">
+                      <span className="text-[11px] text-[#748092] font-semibold block">
+                        Stuck Inventory (On Hand)
+                      </span>
+                      <div className="text-xl font-black text-[#c44e4e] mt-1">
+                        {activeInspectedDeadSku.onHandQty} pieces
+                      </div>
+                      <span className="text-[10px] text-red-600 font-medium">
+                        Age: {activeInspectedDeadSku.ageDays} days in warehouse
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-200">
+                      <span className="text-[11px] text-[#748092] font-semibold block">
+                        Locked Capital
+                      </span>
+                      <div className="text-xl font-bold text-[#17202d] mt-1">
+                        {formatINR(activeInspectedDeadSku.blockedCapital)}
+                      </div>
+                      <span className="text-[10px] text-[#748092]">
+                        Unit COGS: {formatINR(activeInspectedDeadSku.product?.totalCogs || 0)}
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-200">
+                      <span className="text-[11px] text-[#748092] font-semibold block">
+                        Fabric Specification
+                      </span>
+                      <div className="text-base font-bold text-[#17202d] mt-1 truncate">
+                        {activeInspectedDeadSku.fabricType}
+                      </div>
+                      <span className="text-[10px] text-[#748092]">
+                        {activeInspectedDeadSku.product?.fabricQty || 1.35}m @ {formatINR(activeInspectedDeadSku.product?.fabricRate || 180)}/m
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 bg-emerald-50/60 rounded-xl border border-emerald-100">
+                      <span className="text-[11px] text-[#16835d] font-semibold block">
+                        Revival Opportunity
+                      </span>
+                      <div className="text-base font-bold text-[#16835d] mt-1">
+                        Upcycle to New Style
+                      </div>
+                      <span className="text-[10px] text-emerald-700">
+                        Remake {activeInspectedDeadSku.onHandQty} pcs to recover cash
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Remake Advice Banner */}
+                  <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div className="space-y-0.5">
+                      <span className="font-bold text-[#17202d] flex items-center gap-1.5">
+                        <RefreshCw className="w-3.5 h-3.5 text-[#c58b4b]" />
+                        <span>Factory Rework Strategy for {activeInspectedDeadSku.sku}:</span>
+                      </span>
+                      <p className="text-[#566273] text-[11px]">
+                        Instead of writing off {activeInspectedDeadSku.onHandQty} pieces for zero salvage, the tailoring team can alter sleeves, attach contrasting trims or lace, adjust necklines, or overdye to launch a brand new high-margin SKU.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        handleOpenRevivalModal(
+                          activeInspectedDeadSku.sku,
+                          activeInspectedDeadSku.onHandQty,
+                        )
+                      }
+                      className="px-3.5 py-2 bg-[#111c2d] hover:bg-[#1e2f47] text-white text-xs font-bold rounded-xl shrink-0 transition active:scale-95 cursor-pointer whitespace-nowrap"
+                    >
+                      ✨ Launch Remake Wizard
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Dead SKUs Master Table */}
+              <div className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-sm text-[#17202d]">
+                      Dead &amp; Stuck SKU Directory
+                    </h3>
+                    <p className="text-xs text-[#748092]">
+                      Click any SKU row to inspect details or launch revival
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-[#748092]">
+                    {deadSkusList.length} Dead Styles
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto no-scrollbar -mx-5 sm:mx-0 px-5 sm:px-0">
+                  <table className="w-full text-left text-xs min-w-180">
+                    <thead>
+                      <tr className="border-b border-[#e7eaf0] text-[#748092] text-[10px] font-bold uppercase tracking-wider">
+                        <th className="py-2.5 px-3">Dead SKU</th>
+                        <th className="py-2.5 px-3">Style Name &amp; Category</th>
+                        <th className="py-2.5 px-3">Stuck Pieces</th>
+                        <th className="py-2.5 px-3">Age in Days</th>
+                        <th className="py-2.5 px-3">Blocked Capital</th>
+                        <th className="py-2.5 px-3">Status</th>
+                        <th className="py-2.5 px-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 font-medium">
+                      {deadSkusList.map((item) => {
+                        const isSelected =
+                          activeInspectedDeadSku?.sku === item.sku;
+                        return (
+                          <tr
+                            key={item.sku}
+                            onClick={() => setSelectedDeadSkuForDetails(item.sku)}
+                            className={`cursor-pointer transition ${
+                              isSelected ? "bg-amber-50/50" : "hover:bg-gray-50/80"
+                            }`}
+                          >
+                            <td className="py-3 px-3">
+                              <span className="font-bold text-[#17202d]">
+                                {item.sku}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3">
+                              <span className="font-semibold text-[#17202d] block">
+                                {item.productName}
+                              </span>
+                              <span className="text-[10px] text-[#748092]">
+                                {item.category} • {item.fabricType}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 font-extrabold text-[#c44e4e]">
+                              {item.onHandQty} pcs
+                            </td>
+                            <td className="py-3 px-3 font-semibold text-gray-700">
+                              {item.ageDays}d
+                            </td>
+                            <td className="py-3 px-3 font-black text-[#c44e4e]">
+                              {formatINR(item.blockedCapital)}
+                            </td>
+                            <td className="py-3 px-3">
+                              {renderBatchStatusBadge(item.status)}
+                            </td>
+                            <td
+                              className="py-3 px-3 text-right space-x-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                onClick={() => setSelectedDeadSkuForDetails(item.sku)}
+                                className="text-xs font-semibold text-[#748092] hover:text-[#17202d] hover:underline cursor-pointer"
+                              >
+                                Inspect
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleOpenRevivalModal(item.sku, item.onHandQty)
+                                }
+                                className="px-3 py-1.5 bg-[#edf7f2] hover:bg-[#d8efe2] text-[#16835d] text-xs font-bold rounded-lg border border-[#16835d]/20 transition inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                <Sparkles className="w-3 h-3 text-[#16835d]" />
+                                <span>Revive</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Showcase of Revived SKUs */}
+              <div className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-sm text-[#17202d] flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-emerald-600" />
+                      <span>Revived SKU Versions (Active Reworks)</span>
+                    </h3>
+                    <p className="text-xs text-[#748092]">
+                      New styles created from original dead inventory batches
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                    {products.filter((p) => p.isRevivedVersion).length} Revived Styles
+                  </span>
+                </div>
+
+                {products.filter((p) => p.isRevivedVersion).length === 0 ? (
+                  <div className="text-center py-8 text-xs text-[#748092] bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <p>No revived versions created yet.</p>
+                    <p className="mt-1">
+                      Click <strong className="text-[#17202d]">&quot;Revive&quot;</strong> on any dead SKU above to remake stuck pieces into a new version.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {products
+                      .filter((p) => p.isRevivedVersion)
+                      .map((p) => (
+                        <div
+                          key={p.sku}
+                          className="bg-[#fcfdfd] border border-[#d1fae5] rounded-xl p-4 space-y-2.5 shadow-2xs"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <span className="text-[10px] font-black uppercase text-[#16835d]">
+                                {p.category}
+                              </span>
+                              <h4 className="font-bold text-sm text-[#17202d]">
+                                {p.sku}
+                              </h4>
+                              <p className="text-xs text-[#748092]">{p.name}</p>
+                            </div>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#edf7f2] text-[#16835d]">
+                              Active
+                            </span>
+                          </div>
+
+                          <div className="bg-amber-50/80 border border-amber-200 rounded-lg p-2 text-[11px] text-amber-900">
+                            <span className="font-bold flex items-center gap-1">
+                              <Sparkles className="w-3 h-3 text-amber-600" />
+                              <span>Remade from Dead SKU:</span>
+                            </span>
+                            <span className="font-mono font-bold text-[#17202d]">
+                              {p.revivedFromSku}
+                            </span>{" "}
+                            ({p.revivedFromQty || 50} pieces remanufactured)
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-gray-100">
+                            <div>
+                              <span className="text-[10px] text-[#748092] block">
+                                Making Cost
+                              </span>
+                              <span className="font-bold text-[#17202d]">
+                                {formatINR(p.totalCogs)}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-[#748092] block">
+                                MRP
+                              </span>
+                              <span className="font-bold text-[#17202d]">
+                                {formatINR(p.mrp)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setSelectedSku(p.sku);
+                              setActiveTab("costing");
+                            }}
+                            className="w-full py-1.5 bg-white border border-[#e2e8f0] hover:bg-gray-50 text-xs font-semibold rounded-lg text-[#17202d] transition cursor-pointer"
+                          >
+                            Open in Costing Studio
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -5500,6 +6235,15 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                             {p.sku}
                           </h4>
                           <p className="text-xs text-[#748092]">{p.name}</p>
+                          {p.isRevivedVersion && p.revivedFromSku && (
+                            <span className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-md text-[9px] font-black bg-amber-50 text-amber-850 border border-amber-250">
+                              <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+                              <span>
+                                Remade from Dead SKU: {p.revivedFromSku} (
+                                {p.revivedFromQty || 50} pcs)
+                              </span>
+                            </span>
+                          )}
                         </div>
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -6599,6 +7343,216 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
               >
                 Understood
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dead SKU Revival & Re-creation Wizard Modal */}
+      {showRevivalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-[#dfe4eb] space-y-4 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-[#e7eaf0] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[#17202d]">
+                    Recreate Dead SKU into Fresh Version
+                  </h3>
+                  <p className="text-xs text-[#748092]">
+                    Remake{" "}
+                    <strong className="text-[#17202d]">
+                      {revivalForm.piecesAvailable} stuck pieces
+                    </strong>{" "}
+                    from original SKU{" "}
+                    <span className="font-mono font-bold text-[#c58b4b]">
+                      {revivalForm.originSku}
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRevivalModal(false)}
+                className="p-1 rounded-lg text-gray-400 hover:text-[#17202d] hover:bg-gray-100 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Permanent Origin Tag Preview */}
+            <div className="bg-gradient-to-r from-amber-50 via-emerald-50 to-amber-50 border border-amber-200 rounded-xl p-3.5 space-y-1">
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                <span>Mandatory Origin Tag for New SKU</span>
+              </span>
+              <p className="text-xs font-bold text-[#17202d]">
+                ⚡ Revived from Dead SKU: {revivalForm.originSku} (
+                {revivalForm.piecesAvailable} pcs remanufactured)
+              </p>
+              <p className="text-[11px] text-[#566273]">
+                This tag will be permanently attached to this new SKU version
+                and will show in the Style Catalog, Costing Studio, and Batch
+                Register.
+              </p>
+            </div>
+
+            {/* Form Fields */}
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#566273] mb-1">
+                    New SKU ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={revivalForm.newSku}
+                    onChange={(e) =>
+                      setRevivalForm({
+                        ...revivalForm,
+                        newSku: e.target.value.toUpperCase(),
+                      })
+                    }
+                    placeholder="e.g. ATQ-WW-007-REV"
+                    className="w-full px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-bold text-[#17202d] uppercase outline-none focus:border-[#c58b4b]"
+                  />
+                  <span className="text-[10px] text-[#748092] mt-0.5 block">
+                    Suffix like -REV or -V2 recommended
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#566273] mb-1">
+                    Pieces to Recreate / Remake *
+                  </label>
+                  <input
+                    type="number"
+                    value={revivalForm.piecesAvailable}
+                    onChange={(e) =>
+                      setRevivalForm({
+                        ...revivalForm,
+                        piecesAvailable: Number(e.target.value),
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-bold text-[#17202d] outline-none focus:border-[#c58b4b]"
+                  />
+                  <span className="text-[10px] text-[#748092] mt-0.5 block">
+                    e.g. 50 stuck units to be converted
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#566273] mb-1">
+                  New Product Style Name *
+                </label>
+                <input
+                  type="text"
+                  value={revivalForm.newName}
+                  onChange={(e) =>
+                    setRevivalForm({
+                      ...revivalForm,
+                      newName: e.target.value,
+                    })
+                  }
+                  placeholder="e.g. Pure Linen Casual Shirt (Revived V2 - Remade)"
+                  className="w-full px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium text-[#17202d] outline-none focus:border-[#c58b4b]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#566273] mb-1">
+                    Additional Rework Cost (₹/pc)
+                  </label>
+                  <input
+                    type="number"
+                    value={revivalForm.reworkAdditionalCost}
+                    onChange={(e) =>
+                      setRevivalForm({
+                        ...revivalForm,
+                        reworkAdditionalCost: Number(e.target.value),
+                      })
+                    }
+                    placeholder="35"
+                    className="w-full px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-bold text-[#17202d] outline-none focus:border-[#c58b4b]"
+                  />
+                  <span className="text-[10px] text-[#748092] mt-0.5 block">
+                    Tailoring rework, new trims, or alteration
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#566273] mb-1">
+                    New Target MRP (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={revivalForm.newMrp}
+                    onChange={(e) =>
+                      setRevivalForm({
+                        ...revivalForm,
+                        newMrp: Number(e.target.value),
+                      })
+                    }
+                    placeholder="1499"
+                    className="w-full px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-bold text-[#17202d] outline-none focus:border-[#c58b4b]"
+                  />
+                  <span className="text-[10px] text-[#748092] mt-0.5 block">
+                    Selling tag price for the new version
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#566273] mb-1">
+                  Rework Specifications &amp; Factory Notes
+                </label>
+                <textarea
+                  rows={2}
+                  value={revivalForm.revivalNotes}
+                  onChange={(e) =>
+                    setRevivalForm({
+                      ...revivalForm,
+                      revivalNotes: e.target.value,
+                    })
+                  }
+                  placeholder="e.g. Altered 50 pieces by adding new lace on collar and shortening hemline into cropped top."
+                  className="w-full px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium text-[#17202d] outline-none focus:border-[#c58b4b]"
+                />
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-2.5 pt-3 border-t border-[#e7eaf0]">
+              <button
+                type="button"
+                onClick={() => setShowRevivalModal(false)}
+                className="w-full sm:w-auto px-4 py-2 border border-[#dfe4eb] rounded-xl text-xs font-semibold text-[#566273] hover:bg-gray-50 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={handleReviveInCostingStudio}
+                  className="flex-1 sm:flex-initial px-3.5 py-2 bg-white border border-[#c58b4b] text-[#c58b4b] hover:bg-amber-50 text-xs font-bold rounded-xl transition cursor-pointer whitespace-nowrap"
+                  title="Load into Costing Studio to review all BOM line items"
+                >
+                  Edit in Costing Studio
+                </button>
+                <button
+                  type="button"
+                  onClick={handleInstantSaveRevivedSku}
+                  className="flex-1 sm:flex-initial px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold rounded-xl shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap"
+                >
+                  ✨ Save &amp; Launch Revived SKU
+                </button>
+              </div>
             </div>
           </div>
         </div>

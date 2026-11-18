@@ -526,3 +526,13 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
   - **Downwards Tiles in Right Column**: Eliminated blank empty space below the waterfall ledger by adding:
     1. **Batch Production Return Tile**: 4-metric grid (`Making Capital`, `Net Pocket Cash`, `Gross Margin CM2`, `Return on Capital ROI %`).
     2. **Making Cost Distribution Tile**: Live cost anatomy progress bars (`Fabric Share %`, `Trims Share %`, `Silai & Labour Share %`, and `Max Breakeven Ad CAC Cap`). Ensures the right column matches the height of the left column with no empty space.
+- **Dead SKU Graveyard & Revival Studio (Re-creation of Dead Stock)**:
+  - **New Tab & Option (`id: "dead_revival"`)**: Added dedicated "Dead SKU Revival" navigation tab (`Sparkles` icon, `Remake` tag) showcasing all dead & at-risk inventory.
+  - **Dead SKU Deep Inspection**: Clicking any dead SKU loads its deep inspection card (stuck units, days in warehouse, blocked capital, fabric specs, and original BOM).
+  - **Revival & Re-creation Wizard (`showRevivalModal`)**:
+    - Allows factory team to take stuck pieces (e.g. 50 pcs) and recreate them into a brand new SKU version (e.g. `ATQ-WW-007-REV`).
+    - Configurable additional rework/alteration cost (₹/pc), new target MRP, and rework notes.
+    - **Permanent Dead SKU Origin Tag**: Every recreated style carries a persistent badge: `⚡ Revived from Dead SKU: <ORIGIN_SKU> (<QTY> pcs remade)`.
+    - Persisted via `revivedFromSku`, `revivedFromQty`, `isRevivedVersion`, and `revivalNotes` across MongoDB (`Product.ts`), TypeScript types (`types.ts`), server actions (`crm.ts`), and UI views (Style Catalog, Costing Studio banner, and Revival Directory).
+    - Dual launch options: **"✨ Save & Launch Revived SKU"** (instantly persists product and generates a 50-piece production batch) or **"Edit in Costing Studio"** (pre-fills all copied BOM lines and opens Costing Studio for detailed tailoring customization).
+    - Integrated direct **"Revive SKU"** shortcut buttons into the Dead Stock Risk (`liquidation`) table.

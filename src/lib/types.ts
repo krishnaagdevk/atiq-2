@@ -88,6 +88,11 @@ export interface ProductCosting {
   cm2: number; // Gross contribution = CM1 - Commission - COGS
   cm3: number; // Net pocket cash = CM2 - Logistics - Marketing
   status: "Active" | "Paused" | "Discontinued";
+  // Dead Stock Revival & Re-creation Tracking
+  revivedFromSku?: string; // Original Dead SKU ID
+  revivedFromQty?: number; // Pieces recreated/revived
+  isRevivedVersion?: boolean; // Flag if created from a dead SKU
+  revivalNotes?: string; // Factory rework details
   createdAt?: string;
   updatedAt?: string;
 }

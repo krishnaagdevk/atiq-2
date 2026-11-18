@@ -48,6 +48,11 @@ const ProductSchema = new Schema(
       enum: ["Active", "Paused", "Discontinued"],
       default: "Active",
     },
+    // Dead Stock Revival & Re-creation Tracking
+    revivedFromSku: { type: String, default: null },
+    revivedFromQty: { type: Number, default: 0 },
+    isRevivedVersion: { type: Boolean, default: false },
+    revivalNotes: { type: String, default: "" },
   },
   { timestamps: true },
 );
