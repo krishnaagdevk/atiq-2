@@ -553,6 +553,13 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     - **Trims & Accessories Standard Specification Header (Settings)**: Added `(i)` info button on the specification card header displaying the factory manufacturing guidelines and Costing Studio auto-fill tip; removed redundant paragraphs to make the 4 spec cards clean and prominent.
     - **Costing Studio Trims Header**: Added matching `(i)` info button with full trims breakdown tips (Zippers, Buttons, Fusing, Shoulder Pads, Eye Hooks) directly in the BOM table header.
     - Supported dual interaction modes: smooth hover preview on desktop and click-to-toggle with close button on mobile touch devices.
+- **Capacitor Mobile Integration & Android APK Build**:
+  - Integrated Capacitor packages: `@capacitor/core` (`^8.6.2`), `@capacitor/cli` (`^8.6.2`), and `@capacitor/android` (`^8.6.2`).
+  - Configured `capacitor.config.ts` (`appId: "com.atiqcrm.app"`, `appName: "Atiq CRM"`, `webDir: "public"`).
+  - Configured native Android platform via Gradle with local SDK path (`android-36`, build tools `36.0.0`).
+  - Successfully generated Debug APK:
+    - Primary output: `work/android/app/build/outputs/apk/debug/app-debug.apk` (4.12 MB).
+    - Convenient root copy: `work/atiq-crm-debug.apk`.
 - **Dynamic Trims & Materials BOM Table Variants & Inputs**:
   - Added conditional secondary variant/sub-type controls right after the `Item Type` column:
     - **`zipper`**: Secondary dropdown with `concealed` & `cfc`.
@@ -570,3 +577,10 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     - **Trims & Accessories Standard Specification Header (Settings)**: Added `(i)` info button on the specification card header displaying the factory manufacturing guidelines and Costing Studio auto-fill tip; removed redundant paragraphs to make the 4 spec cards clean and prominent.
     - **Costing Studio Trims Header**: Added matching `(i)` info button with full trims breakdown tips (Zippers, Buttons, Fusing, Shoulder Pads, Eye Hooks) directly in the BOM table header.
     - Supported dual interaction modes: smooth hover preview on desktop and click-to-toggle with close button on mobile touch devices.
+- **Capacitor Mobile Integration & Android APK Build**:
+  - Integrated Capacitor packages: `@capacitor/core` (`^8.6.2`), `@capacitor/cli` (`^8.6.2`), and `@capacitor/android` (`^8.6.2`).
+  - Configured `capacitor.config.ts` (`appId: "com.atiqcrm.app"`, `appName: "Atiq CRM"`, `webDir: "public"`).
+  - Configured native Android platform via Gradle with local SDK path (`android-36`, build tools `36.0.0`).
+  - Successfully generated Debug APK:
+    - Primary output: `work/android/app/build/outputs/apk/debug/app-debug.apk` (4.12 MB).
+    - Convenient root copy: `work/atiq-crm-debug.apk`.
