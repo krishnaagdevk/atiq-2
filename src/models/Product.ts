@@ -21,6 +21,7 @@ const ProductSchema = new Schema(
     fabricRate: { type: Number, default: 180 },
     trimsCost: { type: Number, default: 25 },
     trimsDetail: { type: Schema.Types.Mixed, default: {} },
+    trimItems: { type: Schema.Types.Mixed, default: [] },
     cuttingCost: { type: Number, default: 18 },
     stitchingCost: { type: Number, default: 45 },
     finishingCost: { type: Number, default: 12 },

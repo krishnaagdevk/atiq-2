@@ -145,6 +145,7 @@ export async function getInitialData(): Promise<{
       fabricRate: p.fabricRate,
       trimsCost: p.trimsCost,
       trimsDetail: p.trimsDetail || {},
+      trimItems: p.trimItems || p.trimsDetail?.items || [],
       cuttingCost: p.cuttingCost,
       stitchingCost: p.stitchingCost,
       finishingCost: p.finishingCost,

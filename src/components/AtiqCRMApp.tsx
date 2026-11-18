@@ -54,6 +54,7 @@ import {
   BusinessOverheadConfig,
   MarketplaceChannelConfig,
   TrimsBreakdown,
+  TrimRowItem,
   GARMENT_CATEGORIES,
 } from "@/lib/types";
 import {
@@ -103,6 +104,37 @@ const DEFAULT_TRIMS_DETAIL: TrimsBreakdown = {
   eyeHookCost: 2,
   labelsAndThreadCost: 4,
 };
+
+const DEFAULT_TRIM_ROW_ITEMS: TrimRowItem[] = [
+  {
+    id: "trim-1",
+    type: "zipper",
+    name: "Concealed Zipper",
+    quantity: 1,
+    price: 10,
+  },
+  {
+    id: "trim-2",
+    type: "button",
+    name: "Horn Buttons",
+    quantity: 2,
+    price: 2,
+  },
+  {
+    id: "trim-3",
+    type: "fusing",
+    name: "Collar Bukram Fusing",
+    quantity: 1,
+    price: 8,
+  },
+  {
+    id: "trim-4",
+    type: "eyehook",
+    name: "Hook & Bar",
+    quantity: 1,
+    price: 2,
+  },
+];
 
 const TRIM_PRESET_OPTIONS = [
   "Dresses (Concealed Zipper, Fusing, Hook)",
@@ -375,6 +407,13 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
     fabricRate: activeProduct?.fabricRate || config.defaultFabricRate || 180,
     trimsCost: activeProduct?.trimsCost || 24,
     trimsDetail: activeProduct?.trimsDetail || DEFAULT_TRIMS_DETAIL,
+    trimItems:
+      activeProduct?.trimItems && activeProduct.trimItems.length > 0
+        ? activeProduct.trimItems
+        : activeProduct?.trimsDetail?.items &&
+            activeProduct.trimsDetail.items.length > 0
+          ? activeProduct.trimsDetail.items
+          : DEFAULT_TRIM_ROW_ITEMS,
     cuttingCost: activeProduct?.cuttingCost || config.defaultCutting || 18,
     stitchingCost:
       activeProduct?.stitchingCost || config.defaultStitching || 42,
@@ -575,6 +614,71 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
     }
   };
 
+  // Dynamic Trims Item Handlers (fabric, zipper, button, fusing, lining, eyehook)
+  const handleUpdateTrimItem = (
+    id: string,
+    field: "type" | "name" | "quantity" | "price",
+    value: string,
+  ) => {
+    setCostForm((prev) => {
+      const updated = (prev.trimItems || []).map((item) => {
+        if (item.id === id) {
+          return { ...item, [field]: value };
+        }
+        return item;
+      });
+      const newTotal = updated.reduce((acc, it) => {
+        const q = Number(it.quantity) || 0;
+        const p = Number(it.price) || 0;
+        return acc + q * p;
+      }, 0);
+      return {
+        ...prev,
+        trimItems: updated,
+        trimsCost: Math.round(newTotal * 100) / 100,
+      };
+    });
+  };
+
+  const handleAddTrimItem = () => {
+    const newItem: TrimRowItem = {
+      id: `trim-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      type: "zipper",
+      name: "",
+      quantity: 1,
+      price: "",
+    };
+    setCostForm((prev) => {
+      const updated = [...(prev.trimItems || []), newItem];
+      const newTotal = updated.reduce((acc, it) => {
+        const q = Number(it.quantity) || 0;
+        const p = Number(it.price) || 0;
+        return acc + q * p;
+      }, 0);
+      return {
+        ...prev,
+        trimItems: updated,
+        trimsCost: Math.round(newTotal * 100) / 100,
+      };
+    });
+  };
+
+  const handleDeleteTrimItem = (id: string) => {
+    setCostForm((prev) => {
+      const updated = (prev.trimItems || []).filter((item) => item.id !== id);
+      const newTotal = updated.reduce((acc, it) => {
+        const q = Number(it.quantity) || 0;
+        const p = Number(it.price) || 0;
+        return acc + q * p;
+      }, 0);
+      return {
+        ...prev,
+        trimItems: updated,
+        trimsCost: Math.round(newTotal * 100) / 100,
+      };
+    });
+  };
+
   // Batch Form State
   const [batchForm, setBatchForm] = useState({
     id: `BATCH-${currentYear}-${String(batches.length + 1).padStart(3, "0")}`,
@@ -754,6 +858,52 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
     setSelectedSku(sku);
     const p = products.find((item) => item.sku === sku);
     if (p) {
+      const productTrimItems: TrimRowItem[] =
+        p.trimItems && p.trimItems.length > 0
+          ? p.trimItems
+          : p.trimsDetail?.items && p.trimsDetail.items.length > 0
+            ? p.trimsDetail.items
+            : [
+                {
+                  id: `trim-${p.sku}-1`,
+                  type: "zipper",
+                  name:
+                    p.trimsDetail?.zipperType &&
+                    p.trimsDetail.zipperType !== "None"
+                      ? p.trimsDetail.zipperType
+                      : "Concealed Zipper",
+                  quantity: 1,
+                  price:
+                    p.trimsDetail?.zipperCost ?? Math.round(p.trimsCost * 0.4),
+                },
+                {
+                  id: `trim-${p.sku}-2`,
+                  type: "button",
+                  name: "Buttons",
+                  quantity: 2,
+                  price: p.trimsDetail?.buttonsCost
+                    ? Math.round(p.trimsDetail.buttonsCost / 2)
+                    : Math.round(p.trimsCost * 0.15),
+                },
+                {
+                  id: `trim-${p.sku}-3`,
+                  type: "fusing",
+                  name: "Fusing Bukram",
+                  quantity: 1,
+                  price:
+                    p.trimsDetail?.fusingLiningCost ??
+                    Math.round(p.trimsCost * 0.25),
+                },
+                {
+                  id: `trim-${p.sku}-4`,
+                  type: "eyehook",
+                  name: "Hook & Bar",
+                  quantity: 1,
+                  price:
+                    p.trimsDetail?.eyeHookCost ?? Math.round(p.trimsCost * 0.1),
+                },
+              ];
+
       setCostForm({
         sku: p.sku,
         name: p.name,
@@ -762,6 +912,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
         fabricQty: p.fabricQty,
         fabricRate: p.fabricRate,
         trimsCost: p.trimsCost,
+        trimItems: productTrimItems,
         trimsDetail: p.trimsDetail || {
           preset: "Custom",
           buttonsCost: Math.round(p.trimsCost * 0.25),
@@ -812,6 +963,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       fabricQty: 1.35,
       fabricRate: config.defaultFabricRate || 180,
       trimsCost: 24,
+      trimItems: [...DEFAULT_TRIM_ROW_ITEMS],
       trimsDetail: { ...DEFAULT_TRIMS_DETAIL },
       cuttingCost: config.defaultCutting || 18,
       stitchingCost: config.defaultStitching || 42,
@@ -851,7 +1003,11 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       fabricQty: Number(costForm.fabricQty),
       fabricRate: Number(costForm.fabricRate),
       trimsCost: Number(costForm.trimsCost),
-      trimsDetail: costForm.trimsDetail,
+      trimItems: costForm.trimItems,
+      trimsDetail: {
+        ...costForm.trimsDetail,
+        items: costForm.trimItems,
+      },
       cuttingCost: Number(costForm.cuttingCost),
       stitchingCost: Number(costForm.stitchingCost),
       finishingCost: Number(costForm.finishingCost),
@@ -1526,8 +1682,8 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#111c2d] text-white flex flex-col transition-transform duration-200 md:static md:translate-x-0 ${
-          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#111c2d] text-white flex flex-col transition-transform duration-200 ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
         {/* Brand Header */}
@@ -1616,7 +1772,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       </aside>
 
       {/* Main Workspace */}
-      <div className="flex-1 flex flex-col min-w-0 w-full max-w-full overflow-x-hidden overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 w-full max-w-full overflow-x-hidden md:pl-64">
         {/* Top Navbar */}
         <header className="h-16 bg-white border-b border-[#e7eaf0] px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
           <div className="flex items-center gap-3">
@@ -2305,9 +2461,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                               ...prev,
                               category: newCat,
                             }));
-                            if (TRIM_PRESETS[newCat]) {
-                              applyTrimsPreset(newCat);
-                            }
                           }}
                           className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-semibold focus:border-[#c58b4b] outline-none bg-white"
                         >
@@ -2447,7 +2600,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                       </div>
                     </div>
 
-                    {/* 2.2 Trims & Accessories Specification (Boss रोहित रावत Spec) */}
+                    {/* 2.2 Trims & Materials Dynamic Specification */}
                     <div className="bg-[#fcfdfd] border border-[#e7eaf0] rounded-xl p-3.5 space-y-3">
                       <div className="flex items-center justify-between border-b border-[#f0f2f5] pb-2">
                         <span className="text-[11px] font-bold text-[#17202d] flex items-center gap-1.5 uppercase tracking-wider">
@@ -2459,269 +2612,145 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                         </span>
                       </div>
 
-                      {/* Primary Trims Dropdown (Matches Fabric Type Dropdown) */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
-                        <div className="sm:col-span-2">
-                          <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                            Trims Type / Package (Dropdown)
-                          </label>
-                          <select
-                            value={
-                              costForm.trimsDetail?.preset ||
-                              "Dresses (Concealed Zipper, Fusing, Hook)"
-                            }
-                            onChange={(e) => applyTrimsPreset(e.target.value)}
-                            className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-semibold focus:border-[#c58b4b] outline-none bg-white"
+                      {/* Dynamic Trims Row Table */}
+                      <div className="space-y-3">
+                        <div className="overflow-x-auto no-scrollbar -mx-3.5 sm:mx-0 px-3.5 sm:px-0">
+                          <table className="w-full text-left text-xs min-w-160">
+                            <thead>
+                              <tr className="border-b border-[#e7eaf0] text-[#748092] text-[10px] font-bold uppercase tracking-wider">
+                                <th className="py-2 px-2.5 w-36">Item Type</th>
+                                <th className="py-2 px-2.5">Name / Description</th>
+                                <th className="py-2 px-2.5 w-28">Quantity Use</th>
+                                <th className="py-2 px-2.5 w-28">Price (₹)</th>
+                                <th className="py-2 px-2.5 w-24 text-right">Row Cost</th>
+                                <th className="py-2 px-2 w-10 text-center"></th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {(costForm.trimItems || []).map((item, idx) => {
+                                const rowCost =
+                                  (Number(item.quantity) || 0) *
+                                  (Number(item.price) || 0);
+                                return (
+                                  <tr
+                                    key={item.id || idx}
+                                    className="hover:bg-gray-50/80 transition"
+                                  >
+                                    {/* 1. Dropdown with given names */}
+                                    <td className="py-2 px-2.5">
+                                      <select
+                                        value={item.type}
+                                        onChange={(e) =>
+                                          handleUpdateTrimItem(
+                                            item.id,
+                                            "type",
+                                            e.target.value,
+                                          )
+                                        }
+                                        className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-semibold text-[#17202d] bg-white outline-none focus:border-[#c58b4b]"
+                                      >
+                                        <option value="fabric">fabric</option>
+                                        <option value="zipper">zipper</option>
+                                        <option value="button">button</option>
+                                        <option value="fusing">fusing</option>
+                                        <option value="lining">lining</option>
+                                        <option value="eyehook">eyehook</option>
+                                      </select>
+                                    </td>
+
+                                    {/* 2. <name> raw text field */}
+                                    <td className="py-2 px-2.5">
+                                      <input
+                                        type="text"
+                                        value={item.name}
+                                        onChange={(e) =>
+                                          handleUpdateTrimItem(
+                                            item.id,
+                                            "name",
+                                            e.target.value,
+                                          )
+                                        }
+                                        placeholder="Name / Spec (e.g. CFC #3, 18L)"
+                                        className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium text-[#17202d] bg-white outline-none focus:border-[#c58b4b]"
+                                      />
+                                    </td>
+
+                                    {/* 3. <quantity use> raw text field */}
+                                    <td className="py-2 px-2.5">
+                                      <input
+                                        type="text"
+                                        value={item.quantity}
+                                        onChange={(e) =>
+                                          handleUpdateTrimItem(
+                                            item.id,
+                                            "quantity",
+                                            e.target.value,
+                                          )
+                                        }
+                                        placeholder="Qty (e.g. 1)"
+                                        className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium text-[#17202d] bg-white outline-none focus:border-[#c58b4b]"
+                                      />
+                                    </td>
+
+                                    {/* 4. <price> raw text field */}
+                                    <td className="py-2 px-2.5">
+                                      <input
+                                        type="text"
+                                        value={item.price}
+                                        onChange={(e) =>
+                                          handleUpdateTrimItem(
+                                            item.id,
+                                            "price",
+                                            e.target.value,
+                                          )
+                                        }
+                                        placeholder="Price ₹ (e.g. 10)"
+                                        className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium text-[#17202d] bg-white outline-none focus:border-[#c58b4b]"
+                                      />
+                                    </td>
+
+                                    {/* 5. Row Cost calculation */}
+                                    <td className="py-2 px-2.5 text-right font-bold text-[#17202d] whitespace-nowrap">
+                                      ₹{rowCost.toFixed(2)}
+                                    </td>
+
+                                    {/* 6. Delete Row */}
+                                    <td className="py-2 px-2 text-center">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleDeleteTrimItem(item.id)
+                                        }
+                                        className="p-1.5 text-gray-400 hover:text-red-500 rounded-md transition hover:bg-red-50 cursor-pointer"
+                                        title="Remove item"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Action row & Total Cost */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2.5 border-t border-[#f0f2f5]">
+                          <button
+                            type="button"
+                            onClick={handleAddTrimItem}
+                            className="px-3.5 py-2 bg-[#edf7f2] hover:bg-[#d8efe2] text-[#16835d] text-xs font-bold rounded-xl flex items-center gap-1.5 transition active:scale-95 border border-[#16835d]/25 cursor-pointer w-fit shadow-2xs"
                           >
-                            {TRIM_PRESET_OPTIONS.map((presetKey) => (
-                              <option key={presetKey} value={presetKey}>
-                                {presetKey}
-                              </option>
-                            ))}
-                            <option value="Custom">
-                              Custom Trims Breakdown
-                            </option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                            Trims Rate (₹ / Piece)
-                          </label>
-                          <input
-                            type="text"
-                            value={costForm.trimsCost}
-                            onChange={(e) =>
-                              setCostForm({
-                                ...costForm,
-                                trimsCost: Number(e.target.value),
-                              })
-                            }
-                            className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-bold text-[#17202d] outline-none focus:border-[#c58b4b] bg-white"
-                          />
-                        </div>
-                      </div>
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>+ Add Row</span>
+                          </button>
 
-                      {/* Trims Grid Breakdown (Buttons, Zippers [CFC/Concealed], Fusing & Lining, Shoulder Pad, Eye Hook) */}
-                      <div className="bg-[#f8f9fb] p-3 rounded-xl border border-[#edf0f4] space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#748092]">
-                            Specific Trims Breakdown (Buttons, Zippers, Fusing &
-                            Lining, Shoulder Pad, Eye Hook)
-                          </span>
-                          <span className="text-[10px] font-semibold text-[#566273]">
-                            Components Sum: ₹
-                            {(Number(costForm.trimsDetail?.buttonsCost) || 0) +
-                              (Number(costForm.trimsDetail?.zipperCost) || 0) +
-                              (Number(costForm.trimsDetail?.fusingLiningCost) ||
-                                0) +
-                              (Number(costForm.trimsDetail?.shoulderPadCost) ||
-                                0) +
-                              (Number(costForm.trimsDetail?.eyeHookCost) || 0) +
-                              (Number(
-                                costForm.trimsDetail?.labelsAndThreadCost,
-                              ) || 0)}
-                            /pc
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                          {/* 1. Buttons */}
-                          <div className="bg-white p-2.5 rounded-lg border border-[#e2e6eb]">
-                            <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                              Buttons (₹/pc)
-                            </label>
-                            <input
-                              type="text"
-                              value={costForm.trimsDetail?.buttonsCost ?? 0}
-                              onChange={(e) =>
-                                updateTrimsField({
-                                  buttonsCost: Number(e.target.value),
-                                })
-                              }
-                              className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium outline-none focus:border-[#c58b4b]"
-                            />
-                            <span className="text-[10px] text-[#748092] mt-0.5 block">
-                              Placket, cuff or ornamental buttons
+                          <div className="flex items-center gap-3 bg-[#f8f9fb] px-4 py-2 rounded-xl border border-[#e2e6eb]">
+                            <span className="text-xs font-semibold text-[#566273]">
+                              Total Trims Cost:
                             </span>
-                          </div>
-
-                          {/* 2. Zippers (CFC vs Concealed) */}
-                          <div className="bg-white p-2.5 rounded-lg border border-[#e2e6eb] sm:col-span-2">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              <div>
-                                <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                                  Zipper Type (CFC vs Concealed)
-                                </label>
-                                <select
-                                  value={
-                                    costForm.trimsDetail?.zipperType ||
-                                    "Concealed Zipper"
-                                  }
-                                  onChange={(e) => {
-                                    const zType = e.target.value;
-                                    let defaultZCost = 0;
-                                    if (zType === "CFC Zipper")
-                                      defaultZCost = 8;
-                                    else if (zType === "Concealed Zipper")
-                                      defaultZCost = 10;
-                                    else if (zType === "Metal Zipper")
-                                      defaultZCost = 14;
-                                    updateTrimsField({
-                                      zipperType: zType,
-                                      zipperCost: defaultZCost,
-                                    });
-                                  }}
-                                  className="w-full px-2 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-semibold text-[#17202d] outline-none focus:border-[#c58b4b] bg-white"
-                                >
-                                  <option value="None">
-                                    None / No Zipper (₹0)
-                                  </option>
-                                  <option value="CFC Zipper">
-                                    CFC Zipper (Coil / Pants & Outerwear) (₹8)
-                                  </option>
-                                  <option value="Concealed Zipper">
-                                    Concealed Zipper (Invisible / Dresses) (₹10)
-                                  </option>
-                                  <option value="Metal Zipper">
-                                    Metal / Heavy Zipper (₹14)
-                                  </option>
-                                </select>
-                              </div>
-                              <div>
-                                <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                                  Zipper Rate (₹/pc)
-                                </label>
-                                <input
-                                  type="text"
-                                  value={costForm.trimsDetail?.zipperCost ?? 0}
-                                  onChange={(e) =>
-                                    updateTrimsField({
-                                      zipperCost: Number(e.target.value),
-                                    })
-                                  }
-                                  className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium outline-none focus:border-[#c58b4b]"
-                                />
-                              </div>
-                            </div>
-                            <span className="text-[10px] text-[#748092] mt-0.5 block">
-                              Boss spec: CFC (coil) for trousers/jackets,
-                              Concealed (invisible) for dresses
-                            </span>
-                          </div>
-
-                          {/* 3. Fusing & Lining */}
-                          <div className="bg-white p-2.5 rounded-lg border border-[#e2e6eb]">
-                            <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                              Fusing & Lining (₹/pc)
-                            </label>
-                            <input
-                              type="text"
-                              value={
-                                costForm.trimsDetail?.fusingLiningCost ?? 0
-                              }
-                              onChange={(e) =>
-                                updateTrimsField({
-                                  fusingLiningCost: Number(e.target.value),
-                                })
-                              }
-                              className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium outline-none focus:border-[#c58b4b]"
-                            />
-                            <span className="text-[10px] text-[#748092] mt-0.5 block">
-                              Collar/cuff bukram & astra (inner lining)
-                            </span>
-                          </div>
-
-                          {/* 4. Shoulder Pad */}
-                          <div className="bg-white p-2.5 rounded-lg border border-[#e2e6eb]">
-                            <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                              Shoulder Pad
-                            </label>
-                            <div className="flex items-center gap-1.5">
-                              <select
-                                value={
-                                  costForm.trimsDetail?.shoulderPadType ||
-                                  "None"
-                                }
-                                onChange={(e) => {
-                                  const sType = e.target.value;
-                                  let padCost = 0;
-                                  if (sType === "Standard Poly Pad")
-                                    padCost = 8;
-                                  else if (sType === "Molded Tailored Pad")
-                                    padCost = 15;
-                                  updateTrimsField({
-                                    shoulderPadType: sType,
-                                    shoulderPadCost: padCost,
-                                  });
-                                }}
-                                className="w-1/2 px-2 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-semibold outline-none bg-white"
-                              >
-                                <option value="None">None (₹0)</option>
-                                <option value="Standard Poly Pad">
-                                  Standard (₹8)
-                                </option>
-                                <option value="Molded Tailored Pad">
-                                  Molded (₹15)
-                                </option>
-                                <option value="Custom">Custom</option>
-                              </select>
-                              <input
-                                type="text"
-                                value={
-                                  costForm.trimsDetail?.shoulderPadCost ?? 0
-                                }
-                                onChange={(e) =>
-                                  updateTrimsField({
-                                    shoulderPadCost: Number(e.target.value),
-                                  })
-                                }
-                                className="w-1/2 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium outline-none focus:border-[#c58b4b]"
-                              />
-                            </div>
-                            <span className="text-[10px] text-[#748092] mt-0.5 block">
-                              Shoulder structure for blazers & tops
-                            </span>
-                          </div>
-
-                          {/* 5. Eye Hook */}
-                          <div className="bg-white p-2.5 rounded-lg border border-[#e2e6eb]">
-                            <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                              Eye Hook / Clasps (₹/pc)
-                            </label>
-                            <input
-                              type="text"
-                              value={costForm.trimsDetail?.eyeHookCost ?? 0}
-                              onChange={(e) =>
-                                updateTrimsField({
-                                  eyeHookCost: Number(e.target.value),
-                                })
-                              }
-                              className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium outline-none focus:border-[#c58b4b]"
-                            />
-                            <span className="text-[10px] text-[#748092] mt-0.5 block">
-                              Pant hook & bar, dress eyelets, kaj-hook
-                            </span>
-                          </div>
-
-                          {/* 6. Labels, Tags & Thread */}
-                          <div className="bg-white p-2.5 rounded-lg border border-[#e2e6eb]">
-                            <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                              Labels, Tags & Thread (₹/pc)
-                            </label>
-                            <input
-                              type="text"
-                              value={
-                                costForm.trimsDetail?.labelsAndThreadCost ?? 0
-                              }
-                              onChange={(e) =>
-                                updateTrimsField({
-                                  labelsAndThreadCost: Number(e.target.value),
-                                })
-                              }
-                              className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium outline-none focus:border-[#c58b4b]"
-                            />
-                            <span className="text-[10px] text-[#748092] mt-0.5 block">
-                              Woven brand label, wash care, tag & thread
+                            <span className="text-sm font-black text-[#16835d]">
+                              {formatINR(costForm.trimsCost)}
                             </span>
                           </div>
                         </div>
@@ -5934,7 +5963,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     onClick={handleResetGarmentCategories}
                     className="text-xs font-semibold text-[#566273] hover:text-[#17202d] underline self-start sm:self-auto"
                   >
-                    Reset to Power Sutra Standard 6
+                    Reset 
                   </button>
                 </div>
 

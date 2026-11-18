@@ -11,8 +11,24 @@ export const GARMENT_CATEGORIES = [
 
 export type GarmentCategory = (typeof GARMENT_CATEGORIES)[number];
 
+export interface TrimRowItem {
+  id: string;
+  type:
+    | "fabric"
+    | "zipper"
+    | "button"
+    | "fusing"
+    | "lining"
+    | "eyehook"
+    | string;
+  name: string;
+  quantity: number | string;
+  price: number | string;
+}
+
 export interface TrimsBreakdown {
   preset?: string;
+  items?: TrimRowItem[];
   buttonsCost?: number;
   zipperType?:
     | "None"
@@ -45,6 +61,7 @@ export interface ProductCosting {
   fabricRate: number; // ₹ per metre
   trimsCost: number; // ₹ buttons, zipper, labels, thread
   trimsDetail?: TrimsBreakdown;
+  trimItems?: TrimRowItem[];
   cuttingCost: number; // ₹
   stitchingCost: number; // ₹
   finishingCost: number; // ₹ ironing, QC, checking

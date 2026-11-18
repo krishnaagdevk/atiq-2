@@ -485,7 +485,7 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     - Shows all active categories as removable tag chips.
     - Added inline form with `+ Add Category` invoking `addGarmentCategoryAction`.
     - Added delete button invoking `deleteGarmentCategoryAction`.
-    - Added "Reset to Power Sutra Standard 6" invoking `saveConfigAction`.
+
     - Real-time reactivity: added or removed categories immediately update the Costing Studio and all product filters without page refresh.
 - **Dedicated Trims & Accessories Specification Section & Dropdown**:
   - Implemented exact garment specification requested by Boss Rohit Rawat:
@@ -510,3 +510,13 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     3. **Sheet 3: "Factory Overheads"**: Overhead logs with category, description, vendor, amount (₹), and recurrence status.
   - Replaced the single "Print / Export" button in the P&L tab with an "Export to Excel (.xlsx)" primary button (with emerald spreadsheet icon) alongside a secondary "Print" button.
   - Preserved `Download` icon in `lucide-react` import bundle to prevent Turbopack client HMR chunk resolution errors from stale browser caches.
+- **Dynamic Trims & Materials BOM Table (Row-Adding Option)**:
+  - Replaced static trims preset cards with an interactive dynamic row-adding table:
+    - **Item Type Dropdown**: `fabric`, `zipper`, `button`, `fusing`, `lining`, `eyehook`.
+    - **Raw Text Fields**: `<name>` (item specification), `<quantity use>` (units/metres used), and `<price>` (unit rate in ₹).
+    - **Row Cost & Total Cost**: Live computation of `(Quantity × Price)` per row and overall `Total Trims Cost` summing across all rows, dynamically driving garment COGS, CM1, CM2, CM3, and margin percentage.
+    - **Row Management**: `+ Add Row` to append items, trash button to delete rows.
+    - Persisted `trimItems` array across MongoDB schema (`Product.ts`), TypeScript types (`types.ts`), server actions (`crm.ts`), and client costing form state (`AtiqCRMApp.tsx`).
+- **Fixed Sidebar Layout (Sticky Viewport)**:
+  - Updated sidebar layout to `fixed inset-y-0 left-0 z-40 w-64` on desktop (`md:translate-x-0`) with `md:pl-64` on the main workspace.
+  - When scrolling down on the page, the left sidebar remains completely stationary and does not scroll away.
