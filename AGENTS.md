@@ -520,3 +520,9 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
 - **Fixed Sidebar Layout (Sticky Viewport)**:
   - Updated sidebar layout to `fixed inset-y-0 left-0 z-40 w-64` on desktop (`md:translate-x-0`) with `md:pl-64` on the main workspace.
   - When scrolling down on the page, the left sidebar remains completely stationary and does not scroll away.
+- **Costing Studio Elongated Rows & Right-Column Downward Tiles (November 2026)**:
+  - **Elongated 1-Line Section 1 ("1. Garment Style Identity")**: Updated layout to `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3`, placing all 5 inputs (`SKU ID / Code`, `Product Name`, `Garment Category`, `Production Run Target`, and `Pricing Multiplier`) on a single elongated line on desktop.
+  - **Elongated 1-Line Section 3 ("3. Selling & Platform Deductions")**: Updated layout to `grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3`, placing all 6 commercial parameters (`MRP Tag`, `Discount %`, `Expected Returns %`, `Platform Fee %`, `Courier ₹`, and `Meta Ad Spend ₹`) on a single elongated line on desktop.
+  - **Downwards Tiles in Right Column**: Eliminated blank empty space below the waterfall ledger by adding:
+    1. **Batch Production Return Tile**: 4-metric grid (`Making Capital`, `Net Pocket Cash`, `Gross Margin CM2`, `Return on Capital ROI %`).
+    2. **Making Cost Distribution Tile**: Live cost anatomy progress bars (`Fabric Share %`, `Trims Share %`, `Silai & Labour Share %`, and `Max Breakeven Ad CAC Cap`). Ensures the right column matches the height of the left column with no empty space.

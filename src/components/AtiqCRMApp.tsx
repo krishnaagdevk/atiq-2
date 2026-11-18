@@ -2422,9 +2422,9 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 min-w-0">
                       <div>
-                        <label className="block text-[11px] font-bold text-[#566273] mb-1">
+                        <label className="block text-[11px] font-bold text-[#566273] mb-1 truncate">
                           SKU ID / Code
                         </label>
                         <input
@@ -2433,11 +2433,11 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                           onChange={(e) =>
                             setCostForm({ ...costForm, sku: e.target.value })
                           }
-                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-bold focus:border-[#c58b4b] outline-none uppercase"
+                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-bold focus:border-[#c58b4b] outline-none uppercase bg-white"
                         />
                       </div>
-                      <div className="sm:col-span-2">
-                        <label className="block text-[11px] font-bold text-[#566273] mb-1">
+                      <div>
+                        <label className="block text-[11px] font-bold text-[#566273] mb-1 truncate">
                           Product Name
                         </label>
                         <input
@@ -2446,11 +2446,11 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                           onChange={(e) =>
                             setCostForm({ ...costForm, name: e.target.value })
                           }
-                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium focus:border-[#c58b4b] outline-none"
+                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium focus:border-[#c58b4b] outline-none bg-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-bold text-[#566273] mb-1">
+                        <label className="block text-[11px] font-bold text-[#566273] mb-1 truncate">
                           Garment Category
                         </label>
                         <select
@@ -2472,8 +2472,8 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                          Production Run Target (Pieces)
+                        <label className="block text-[11px] font-bold text-[#566273] mb-1 truncate">
+                          Production Run Target
                         </label>
                         <input
                           type="text"
@@ -2484,11 +2484,11 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                               productionRunQty: Number(e.target.value),
                             })
                           }
-                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-bold focus:border-[#c58b4b] outline-none"
+                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-bold focus:border-[#c58b4b] outline-none bg-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-bold text-[#566273] mb-1">
+                        <label className="block text-[11px] font-bold text-[#566273] mb-1 truncate">
                           Pricing Multiplier
                         </label>
                         <input
@@ -2503,7 +2503,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                           }
                           className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-bold focus:border-[#c58b4b] outline-none bg-amber-50/50"
                         />
-                        <span className="text-[10px] text-[#a66a1d] block mt-0.5">
+                        <span className="text-[10px] text-[#a66a1d] block mt-0.5 truncate">
                           Recommended: 2.0x - 2.5x
                         </span>
                       </div>
@@ -2897,9 +2897,9 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 min-w-0">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 min-w-0">
                       <div>
-                        <label className="block text-[11px] font-bold text-[#566273] mb-1">
+                        <label className="block text-[11px] font-bold text-[#566273] mb-1 truncate">
                           MRP Tag (₹)
                         </label>
                         <input
@@ -2911,12 +2911,12 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                               mrp: Number(e.target.value),
                             })
                           }
-                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-extrabold text-[#111c2d] outline-none focus:border-[#c58b4b]"
+                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-extrabold text-[#111c2d] outline-none focus:border-[#c58b4b] bg-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                          Discount Given (%)
+                        <label className="block text-[11px] font-bold text-[#566273] mb-1 truncate">
+                          Discount (%)
                         </label>
                         <input
                           type="text"
@@ -2927,12 +2927,12 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                               discountPct: Number(e.target.value),
                             })
                           }
-                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium outline-none focus:border-[#c58b4b]"
+                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium outline-none focus:border-[#c58b4b] bg-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                          Expected Returns (%)
+                        <label className="block text-[11px] font-bold text-[#566273] mb-1 truncate">
+                          Returns (%)
                         </label>
                         <input
                           type="text"
@@ -2943,11 +2943,11 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                               expectedReturnsPct: Number(e.target.value),
                             })
                           }
-                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium outline-none focus:border-[#c58b4b]"
+                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium outline-none focus:border-[#c58b4b] bg-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-bold text-[#566273] mb-1">
+                        <label className="block text-[11px] font-bold text-[#566273] mb-1 truncate">
                           Platform Fee (%)
                         </label>
                         <input
@@ -2960,15 +2960,15 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                               marketplaceCommissionPct: Number(e.target.value),
                             })
                           }
-                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium outline-none focus:border-[#c58b4b]"
+                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium outline-none focus:border-[#c58b4b] bg-white"
                         />
-                        <span className="text-[10px] text-[#748092] block mt-0.5">
+                        <span className="text-[10px] text-[#748092] block mt-0.5 truncate">
                           Myntra 22.5%
                         </span>
                       </div>
                       <div>
-                        <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                          Forward Courier (₹)
+                        <label className="block text-[11px] font-bold text-[#566273] mb-1 truncate">
+                          Courier (₹)
                         </label>
                         <input
                           type="text"
@@ -2979,12 +2979,12 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                               logisticsCost: Number(e.target.value),
                             })
                           }
-                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium outline-none focus:border-[#c58b4b]"
+                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium outline-none focus:border-[#c58b4b] bg-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                          Meta Ad Spend (₹/pc)
+                        <label className="block text-[11px] font-bold text-[#566273] mb-1 truncate">
+                          Meta Ad Spend (₹)
                         </label>
                         <input
                           type="text"
@@ -2995,7 +2995,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                               marketingCost: Number(e.target.value),
                             })
                           }
-                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium outline-none focus:border-[#c58b4b]"
+                          className="w-full min-w-0 px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium outline-none focus:border-[#c58b4b] bg-white"
                         />
                       </div>
                     </div>
@@ -3172,6 +3172,175 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                         </span>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Batch Production Economics & Net Pocket Cash Tiles */}
+                  <div className="bg-white border border-[#e7eaf0] rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3 min-w-0 w-full">
+                    <div className="flex items-center justify-between border-b border-[#e7eaf0] pb-2">
+                      <h4 className="font-bold text-xs uppercase tracking-wider text-[#17202d] flex items-center gap-1.5">
+                        <TrendingUp className="w-3.5 h-3.5 text-[#c58b4b]" />
+                        <span>Batch Production Return ({costForm.productionRunQty} pcs)</span>
+                      </h4>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                          liveEco.cm3 >= 0
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-red-50 text-red-700 border-red-200"
+                        }`}
+                      >
+                        {liveEco.cm3 >= 0 ? "Profitable Run" : "Loss Risk"}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <span className="text-[10px] font-semibold text-[#748092] block uppercase tracking-wider">
+                          Making Capital
+                        </span>
+                        <span className="text-sm sm:text-base font-bold text-[#17202d] mt-0.5 block">
+                          {formatINR(
+                            liveEco.totalCogs * costForm.productionRunQty,
+                          )}
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                          Total batch cost
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-[#edf7f2] rounded-xl border border-[#c4e3d3]">
+                        <span className="text-[10px] font-semibold text-[#16835d] block uppercase tracking-wider">
+                          Net Pocket Cash
+                        </span>
+                        <span
+                          className={`text-sm sm:text-base font-black mt-0.5 block ${
+                            liveEco.cm3 >= 0
+                              ? "text-[#16835d]"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {formatINR(liveEco.cm3 * costForm.productionRunQty)}
+                        </span>
+                        <span className="text-[10px] text-[#16835d]">
+                          CM3 × {costForm.productionRunQty} pcs
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-[#eff6ff] rounded-xl border border-[#d0e1fd]">
+                        <span className="text-[10px] font-semibold text-[#2563eb] block uppercase tracking-wider">
+                          Gross Margin (CM2)
+                        </span>
+                        <span className="text-sm sm:text-base font-bold text-[#2563eb] mt-0.5 block">
+                          {formatINR(liveEco.cm2 * costForm.productionRunQty)}
+                        </span>
+                        <span className="text-[10px] text-[#2563eb]">
+                          Before courier & ads
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200">
+                        <span className="text-[10px] font-semibold text-[#a66a1d] block uppercase tracking-wider">
+                          Return on Capital
+                        </span>
+                        <span className="text-sm sm:text-base font-black text-[#a66a1d] mt-0.5 block">
+                          {liveEco.totalCogs > 0
+                            ? `${Math.round((liveEco.cm3 / liveEco.totalCogs) * 100)}%`
+                            : "0%"}
+                        </span>
+                        <span className="text-[10px] text-[#a66a1d]">
+                          Net CM3 / COGS
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* COGS Composition Breakdown */}
+                  <div className="bg-white border border-[#e7eaf0] rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3 min-w-0 w-full">
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-[#17202d] border-b border-[#e7eaf0] pb-2 flex items-center justify-between">
+                      <span>Making Cost Distribution</span>
+                      <span className="text-[10px] text-[#748092] font-semibold lowercase">
+                        100% of total cogs
+                      </span>
+                    </h4>
+
+                    {(() => {
+                      const fabricTotal =
+                        Number(costForm.fabricQty) *
+                        Number(costForm.fabricRate);
+                      const trimsTotal = Number(costForm.trimsCost);
+                      const operationsTotal =
+                        Number(costForm.cuttingCost) +
+                        Number(costForm.stitchingCost) +
+                        Number(costForm.finishingCost) +
+                        Number(costForm.packagingCost) +
+                        Number(costForm.otherCost);
+                      const cogsTotal = liveEco.totalCogs || 1;
+
+                      const fabricPct = Math.min(
+                        100,
+                        Math.round((fabricTotal / cogsTotal) * 100),
+                      );
+                      const trimsPct = Math.min(
+                        100 - fabricPct,
+                        Math.round((trimsTotal / cogsTotal) * 100),
+                      );
+                      const opsPct = Math.max(0, 100 - fabricPct - trimsPct);
+
+                      return (
+                        <div className="space-y-2.5 text-xs">
+                          <div>
+                            <div className="flex justify-between text-gray-600 mb-1">
+                              <span>Fabric (Kapda)</span>
+                              <span className="font-semibold text-[#17202d]">
+                                {formatINR(fabricTotal)} ({fabricPct}%)
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                              <div
+                                className="bg-[#c58b4b] h-1.5 rounded-full"
+                                style={{ width: `${fabricPct}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex justify-between text-gray-600 mb-1">
+                              <span>Trims & Accessories</span>
+                              <span className="font-semibold text-[#17202d]">
+                                {formatINR(trimsTotal)} ({trimsPct}%)
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                              <div
+                                className="bg-[#16835d] h-1.5 rounded-full"
+                                style={{ width: `${trimsPct}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex justify-between text-gray-600 mb-1">
+                              <span>Silai, Cutting & Packaging</span>
+                              <span className="font-semibold text-[#17202d]">
+                                {formatINR(operationsTotal)} ({opsPct}%)
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                              <div
+                                className="bg-[#2563eb] h-1.5 rounded-full"
+                                style={{ width: `${opsPct}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-[#748092]">
+                            <span>Max Breakeven Ad CAC Cap:</span>
+                            <span className="font-bold text-[#c58b4b]">
+                              {formatINR(liveEco.cm2)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
