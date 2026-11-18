@@ -1,15 +1,29 @@
 // Types & Data Structures for Atiq CRM
 
+export interface TrimsBreakdown {
+  preset?: string;
+  buttonsCost?: number;
+  zipperType?: "None" | "CFC Zipper" | "Concealed Zipper" | "Metal Zipper" | string;
+  zipperCost?: number;
+  fusingLiningCost?: number;
+  shoulderPadType?: "None" | "Standard Poly Pad" | "Molded Tailored Pad" | "Custom" | string;
+  shoulderPadCost?: number;
+  eyeHookCost?: number;
+  labelsAndThreadCost?: number;
+}
+
 export interface ProductCosting {
   id?: string;
   sku: string;
   name: string;
-  category: "Westernwear" | "Homewear" | "Ethnicwear" | "Kidswear" | "Accessories";
+  category: string;
+  fabricType?: string;
   marketplaces: string[]; // e.g. ["Myntra", "Amazon", "Flipkart", "Shopify", "Offline"]
   // BOM elements (Per-piece)
   fabricQty: number; // in metres
   fabricRate: number; // ₹ per metre
   trimsCost: number; // ₹ buttons, zipper, labels, thread
+  trimsDetail?: TrimsBreakdown;
   cuttingCost: number; // ₹
   stitchingCost: number; // ₹
   finishingCost: number; // ₹ ironing, QC, checking
@@ -129,6 +143,8 @@ export interface BusinessOverheadConfig {
   defaultMarketingCost: number;
   defaultExpectedReturnsPct: number;
   defaultCarryingCostPct: number; // e.g. 18% annual inventory carrying cost
+  garmentCategories?: string[]; // Config-controlled garment categories
+  fabricTypes?: string[]; // Standard fabric options
   customExpenseCategories?: string[];
   marketplacesConfig?: MarketplaceChannelConfig[];
   // Ageing rules (in days)

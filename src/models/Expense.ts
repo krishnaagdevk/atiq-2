@@ -41,6 +41,24 @@ const OverheadConfigSchema = new Schema(
     defaultMarketingCost: { type: Number, default: 45 },
     defaultExpectedReturnsPct: { type: Number, default: 10 },
     defaultCarryingCostPct: { type: Number, default: 18 },
+    garmentCategories: {
+      type: [String],
+      default: ["Westernwear", "Homewear", "Ethnicwear", "Kidswear", "Accessories"],
+    },
+    fabricTypes: {
+      type: [String],
+      default: [
+        "100% Cotton",
+        "Rayon 14kg",
+        "Georgette",
+        "Polyester Crepe",
+        "Linen Blend",
+        "Denim / Twill",
+        "Silk Blend",
+        "Lycra / Rib Knit",
+        "Other Fabric",
+      ],
+    },
     customExpenseCategories: {
       type: [String],
       default: [

@@ -416,3 +416,29 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
 3. **No authentication:** Access control is a future feature.
 4. **No real-time sync:** React useState only. Two browsers will see stale data until refresh.
 5. **Age in days is manual:** User enters ageDays manually. Auto-compute from productionDate is a future improvement.
+
+---
+
+## 16. RECENT UPDATES & CHANGELOG
+
+### Config-Controlled Garment Categories & Trims Specification (Nov 2026)
+- **Config-Controlled Garment Categories**:
+  - `BusinessOverheadConfig` in `src/lib/types.ts` updated with `garmentCategories?: string[]` and `fabricTypes?: string[]`.
+  - MongoDB `OverheadConfigSchema` (`src/models/Expense.ts`) and `initialConfig` (`src/lib/seed.ts`) now store dynamic garment categories.
+  - Mongoose `ProductSchema` (`src/models/Product.ts`) updated from static enum to string category to allow custom categories without validation errors.
+  - Added Server Actions `addGarmentCategoryAction` and `deleteGarmentCategoryAction` in `src/actions/crm.ts`.
+  - In `AtiqCRMApp.tsx`, added Garment Categories Master Directory in Settings module, and dynamic Category select dropdown with "+ Add New" quick modal in Costing Studio.
+- **Boss Rohit's Trims & Accessories Specific Section**:
+  - Added dedicated `TrimsBreakdown` interface in `src/lib/types.ts`.
+  - Integrated in Section 2 (Making Cost per Piece / COGS) of Costing Studio:
+    1. **Fabric Dropdown (Kapda Selection)** with benchmark rates (100% Cotton, Rayon 14kg, Georgette, Polyester Crepe, Linen Blend, Denim, Silk, Lycra).
+    2. **Dedicated Trims & Accessories Specification card**:
+       - Trims preset dropdown (T-Shirt, Shirt/Kurta, Western Dress, Blazer, Trousers, Ethnic Kurti, Custom).
+       - **Buttons** (₹/pc).
+       - **Zippers** with explicit dropdown between **CFC Zipper** and **Concealed Zipper** (plus None / Metal) and rate.
+       - **Fusing & Lining (Astra)** (₹/pc).
+       - **Shoulder Pad** (dropdown: None, Standard Poly Pad ₹8, Molded Tailored Pad ₹15, Custom) and cost.
+       - **Eye Hook** (kaj-hook / clasps) (₹/pc).
+       - **Brand Labels, Wash Care & Thread** (₹/pc).
+       - Auto-sums components directly into `costForm.trimsCost` and COGS economics with optional manual override.
+       - Persists `trimsDetail` on product save and loads on SKU selection.

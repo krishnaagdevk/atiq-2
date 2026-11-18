@@ -139,10 +139,12 @@ export async function getInitialData(): Promise<{
       sku: p.sku,
       name: p.name,
       category: p.category,
+      fabricType: p.fabricType || "100% Cotton",
       marketplaces: p.marketplaces || [],
       fabricQty: p.fabricQty,
       fabricRate: p.fabricRate,
       trimsCost: p.trimsCost,
+      trimsDetail: p.trimsDetail || {},
       cuttingCost: p.cuttingCost,
       stitchingCost: p.stitchingCost,
       finishingCost: p.finishingCost,
@@ -244,6 +246,14 @@ export async function getInitialData(): Promise<{
           defaultMarketingCost: dbConfig.defaultMarketingCost,
           defaultExpectedReturnsPct: dbConfig.defaultExpectedReturnsPct,
           defaultCarryingCostPct: dbConfig.defaultCarryingCostPct || 18,
+          garmentCategories:
+            dbConfig.garmentCategories && dbConfig.garmentCategories.length > 0
+              ? dbConfig.garmentCategories
+              : memConfig.garmentCategories || initialConfig.garmentCategories,
+          fabricTypes:
+            dbConfig.fabricTypes && dbConfig.fabricTypes.length > 0
+              ? dbConfig.fabricTypes
+              : memConfig.fabricTypes || initialConfig.fabricTypes,
           customExpenseCategories:
             dbConfig.customExpenseCategories || memConfig.customExpenseCategories,
           marketplacesConfig:
@@ -623,6 +633,57 @@ export async function addExpenseCategoryAction(categoryName: string) {
       memConfig.customExpenseCategories.push(trimmed);
     }
     return { success: true, categories: memConfig.customExpenseCategories };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function addGarmentCategoryAction(categoryName: string) {
+  try {
+    const trimmed = categoryName.trim();
+    if (!trimmed) return { success: false, error: "Garment category name required" };
+
+    const db = await connectDB();
+    if (db) {
+      await OverheadConfigModel.findOneAndUpdate(
+        {},
+        { $addToSet: { garmentCategories: trimmed } },
+        { upsert: true }
+      );
+    }
+
+    if (!memConfig.garmentCategories) {
+      memConfig.garmentCategories = [...(initialConfig.garmentCategories || [])];
+    }
+    if (!memConfig.garmentCategories.includes(trimmed)) {
+      memConfig.garmentCategories.push(trimmed);
+    }
+    return { success: true, categories: memConfig.garmentCategories };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteGarmentCategoryAction(categoryName: string) {
+  try {
+    const trimmed = categoryName.trim();
+    if (!trimmed) return { success: false, error: "Garment category name required" };
+
+    const db = await connectDB();
+    if (db) {
+      await OverheadConfigModel.findOneAndUpdate(
+        {},
+        { $pull: { garmentCategories: trimmed } },
+        { upsert: true }
+      );
+    }
+
+    if (memConfig.garmentCategories) {
+      memConfig.garmentCategories = memConfig.garmentCategories.filter(
+        (c) => c !== trimmed
+      );
+    }
+    return { success: true, categories: memConfig.garmentCategories };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
