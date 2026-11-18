@@ -442,3 +442,38 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
        - **Brand Labels, Wash Care & Thread** (₹/pc).
        - Auto-sums components directly into `costForm.trimsCost` and COGS economics with optional manual override.
        - Persists `trimsDetail` on product save and loads on SKU selection.
+
+### Deployment Build Fix for MongoDB Connection
+- In `src/lib/db.ts`:
+  - Added `.catch()` directly on `cached.promise` so unhandled promise rejections during `mongoose.connect()` never crash the server or build workers.
+  - Checked `process.env.MONGODB_URI` before initiating connections; gracefully falls back to memory demo mode instead of trying `localhost:27017` on build servers.
+  - Reduced timeout to 5000ms.
+- In `src/app/page.tsx`:
+  - Added `export const dynamic = "force-dynamic";` so Next.js treats the database-backed page as dynamic, preventing Next.js from running MongoDB connections during the static page prerendering phase at build time.
+
+### Prototype Normalization, Redirectable Cards & Dead Stock Ageing Policy
+- **Redirectable & Bidirectional Dashboard Cards**:
+  - The top 4 Overview KPI flashcards are now fully interactive with cursor-pointer, hover transitions, and redirect footer pills:
+    1. **Styles Costed** (`products.length`) -> redirects to `costing` (Costing Studio).
+    2. **Average Making Cost / MRP** (`avgCogsPct`) -> redirects to `costing` (Target Economics).
+    3. **Warehouse Stock On-Hand** (`totalStockOnHand`) -> redirects to `stock_top` (Stock Valuation).
+    4. **Blocked Capital at Cost** (`totalBlockedCapital`) -> redirects to `liquidation` (Dead Stock Manager) with direct access to Dead Stock Ageing Policy.
+  - Added "← Back to Dashboard Overview" navigation across all sub-modules (`costing`, `revenue`, `profitability`, `stock_top`, `batches`, `liquidation`, `returns`, `expenses`, `skus`, `settings`) and an interactive header breadcrumb button to provide bidirectional navigation.
+- **Product Category Standardization (Purged Kidswear & Hardcoded for Prototype)**:
+  - Standardized the core garment categories to the 6 women's apparel lines: `["Dresses", "Tops & Shirts", "Trousers & Pants", "Co-ord Sets", "Blazers & Jackets", "Jumpsuits"]`.
+  - Exported `GARMENT_CATEGORIES` and `GarmentCategory` type in `src/lib/types.ts`.
+  - Updated `src/models/Product.ts` and `src/models/Expense.ts` schemas.
+  - Updated `src/lib/seed.ts` products, batches, sales, and returns to remove all references to old kidswear items (`ATQ-KD-022`, `Baby Romper`) and replace with realistic formal workwear (`ATQ-CRD-022` Linen Blend Trouser Co-ord Set, `ATQ-DRS-014` Crepe A-Line Midi Dress, etc.).
+  - Hardcoded garment categories in Costing Studio dropdown and removed ad-hoc category additions to protect prototype data integrity.
+  - In Settings, replaced dynamic creation pills with verified Master Taxonomy cards and an MIS specification note.
+- **Dead Stock 'ℹ️' Info Icon & Classification Modal**:
+  - Built `renderBatchStatusBadge` helper attaching interactive `ℹ️` trigger buttons to status badges across `stock_top`, `batches`, and `liquidation`.
+  - Added dedicated `DeadStockInfoModal` explaining the 4 age stages:
+    1. **Active Stock** (< 30 days): Fresh production in peak sales window. Zero capital risk.
+    2. **Ageing Stock** (30–60 days): Velocity slowing. Triggers Meta ad push or promotional discount.
+    3. **Liquidation Stage** (60–90 days): High capital risk. Activates Recovery Calculator to recover unit COGS.
+    4. **Dead Stock** (> 90 days): Stagnant inventory bleeding carrying cost (~18% p.a.). Mandatory flash sale or lot salvage.
+  - Added header-level "Dead Stock Policy" trigger button across tables.
+- **UI Card Alignment & Normalization**:
+  - Balanced Dashboard middle row (Cost Structure vs Margin Waterfall) with matching header heights and aligned footer bars.
+  - Equalized Settings side-by-side cards: "Default Factory Rates" (6 inputs) and "Commercial Multipliers & Benchmarks" (6 inputs) with `items-stretch` and `h-full flex flex-col justify-between` to ensure identical rectangular proportions.

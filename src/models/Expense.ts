@@ -43,7 +43,14 @@ const OverheadConfigSchema = new Schema(
     defaultCarryingCostPct: { type: Number, default: 18 },
     garmentCategories: {
       type: [String],
-      default: ["Westernwear", "Homewear", "Ethnicwear", "Kidswear", "Accessories"],
+      default: [
+        "Dresses",
+        "Tops & Shirts",
+        "Trousers & Pants",
+        "Co-ord Sets",
+        "Blazers & Jackets",
+        "Jumpsuits",
+      ],
     },
     fabricTypes: {
       type: [String],

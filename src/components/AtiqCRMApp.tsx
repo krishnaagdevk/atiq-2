@@ -24,6 +24,9 @@ import {
   Flame,
   ArrowUpRight,
   ArrowDownRight,
+  ArrowLeft,
+  ArrowRight,
+  Info,
   Download,
   Percent,
   Building2,
@@ -48,6 +51,7 @@ import {
   BusinessOverheadConfig,
   MarketplaceChannelConfig,
   TrimsBreakdown,
+  GARMENT_CATEGORIES,
 } from "@/lib/types";
 import {
   formatINR,
@@ -70,8 +74,6 @@ import {
   deleteSaleAction,
   saveConfigAction,
   addExpenseCategoryAction,
-  addGarmentCategoryAction,
-  deleteGarmentCategoryAction,
 } from "@/actions/crm";
 
 interface AtiqAppProps {
@@ -169,7 +171,7 @@ const TRIM_PRESETS: Record<string, TrimsBreakdown> = {
 const FABRIC_BENCHMARKS: Record<string, number> = {
   "100% Cotton": 180,
   "Rayon 14kg": 140,
-  "Georgette": 120,
+  Georgette: 120,
   "Polyester Crepe": 130,
   "Linen Blend": 240,
   "Denim / Twill": 260,
@@ -251,7 +253,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
       activeProduct?.sku || `ATQ-NEW-${Math.floor(100 + Math.random() * 900)}`,
     name: activeProduct?.name || "New Garment Style",
     category:
-      activeProduct?.category || config.garmentCategories?.[0] || "Westernwear",
+      activeProduct?.category || config.garmentCategories?.[0] || "Dresses",
     fabricType:
       activeProduct?.fabricType || config.fabricTypes?.[0] || "100% Cotton",
     fabricQty: activeProduct?.fabricQty || 1.4,
@@ -294,26 +296,48 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
     productionRunQty: 100,
   });
 
-  // Garment Category and Trims management state
-  const [newGarmentCategoryInput, setNewGarmentCategoryInput] = useState("");
-  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
+  // Dead Stock Policy and Info Modal State
+  const [showDeadStockInfoModal, setShowDeadStockInfoModal] = useState(false);
 
-  const garmentCategoriesList = useMemo(() => {
-    const list =
-      config.garmentCategories && config.garmentCategories.length > 0
-        ? config.garmentCategories
-        : [
-            "Westernwear",
-            "Homewear",
-            "Ethnicwear",
-            "Kidswear",
-            "Accessories",
-          ];
-    if (costForm.category && !list.includes(costForm.category)) {
-      return [...list, costForm.category];
+  // Prototype Master Categories (Standardized and hardcoded per MIS specification)
+  const garmentCategoriesList = GARMENT_CATEGORIES;
+
+  // Render standardized batch status badge with interactive 'i' info trigger
+  const renderBatchStatusBadge = (status: ProductionBatch["status"]) => {
+    let badgeColor = "bg-[#edf7f2] text-[#16835d] border-[#16835d]/20";
+    let explanation = `Active (<${config.ageThresholdActive || 30} days): Fresh production run moving at regular sales velocity. Zero capital risk.`;
+
+    if (status === "Ageing") {
+      badgeColor = "bg-[#fff4e5] text-[#a66a1d] border-[#a66a1d]/20";
+      explanation = `Ageing (${config.ageThresholdActive || 30}-${config.ageThresholdAgeing || 60} days): Sales slowing down. Requires promotional boost or discounts.`;
+    } else if (status === "Liquidation") {
+      badgeColor = "bg-[#fff0f0] text-[#c44e4e] border-[#c44e4e]/20";
+      explanation = `Liquidation (${config.ageThresholdAgeing || 60}-${config.ageThresholdLiquidation || 90} days): Capital stuck. Recommended to markdown to recover manufacturing cost.`;
+    } else if (status === "Dead stock") {
+      badgeColor = "bg-[#450a0a] text-white border-red-900";
+      explanation = `Dead Stock (>${config.ageThresholdLiquidation || 90} days): Stagnant inventory bleeding carrying cost (~18% p.a.). High priority clearance.`;
     }
-    return list;
-  }, [config.garmentCategories, costForm.category]);
+
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}`}
+        title={explanation}
+      >
+        <span>{status}</span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDeadStockInfoModal(true);
+          }}
+          className="opacity-70 hover:opacity-100 hover:scale-125 transition"
+          title="Click to view full Dead Stock Ageing Policy & Conditions"
+        >
+          <Info className="w-3 h-3" />
+        </button>
+      </span>
+    );
+  };
 
   const fabricTypesList = useMemo(() => {
     return config.fabricTypes && config.fabricTypes.length > 0
@@ -330,64 +354,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
           "Other Fabric",
         ];
   }, [config.fabricTypes]);
-
-  const handleAddGarmentCategory = async (catName?: string) => {
-    const name = (catName || newGarmentCategoryInput).trim();
-    if (!name) return;
-    const currentCats = config.garmentCategories || [
-      "Westernwear",
-      "Homewear",
-      "Ethnicwear",
-      "Kidswear",
-      "Accessories",
-    ];
-    if (currentCats.some((c) => c.toLowerCase() === name.toLowerCase())) {
-      showToast(`Category "${name}" already exists.`, "error");
-      return;
-    }
-    const updated = [...currentCats, name];
-    const res = await addGarmentCategoryAction(name);
-    if (res.success) {
-      setConfig((prev) => ({
-        ...prev,
-        garmentCategories: res.categories || updated,
-      }));
-      setCostForm((prev) => ({ ...prev, category: name }));
-      setNewGarmentCategoryInput("");
-      setIsAddCategoryModalOpen(false);
-      showToast(`Added garment category: ${name}`);
-    } else {
-      showToast("Could not save garment category.", "error");
-    }
-  };
-
-  const handleDeleteGarmentCategory = async (catToDelete: string) => {
-    const currentCats = config.garmentCategories || [
-      "Westernwear",
-      "Homewear",
-      "Ethnicwear",
-      "Kidswear",
-      "Accessories",
-    ];
-    if (currentCats.length <= 1) {
-      showToast("Must have at least one garment category.", "error");
-      return;
-    }
-    const updated = currentCats.filter((c) => c !== catToDelete);
-    const res = await deleteGarmentCategoryAction(catToDelete);
-    if (res.success) {
-      setConfig((prev) => ({
-        ...prev,
-        garmentCategories: res.categories || updated,
-      }));
-      if (costForm.category === catToDelete) {
-        setCostForm((prev) => ({ ...prev, category: updated[0] }));
-      }
-      showToast(`Removed garment category: ${catToDelete}`);
-    } else {
-      showToast("Could not remove garment category.", "error");
-    }
-  };
 
   const updateTrimsField = (patch: Partial<TrimsBreakdown>) => {
     const current = costForm.trimsDetail || DEFAULT_TRIMS_DETAIL;
@@ -526,7 +492,8 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
         ? {
             ...ch,
             status: (ch.status === "Active" ? "Paused" : "Active") as
-              "Active" | "Paused",
+              | "Active"
+              | "Paused",
           }
         : ch,
     );
@@ -1335,13 +1302,47 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div className="text-xs text-[#748092] flex items-center gap-1.5">
-              <span>Studio</span>
-              <span>/</span>
-              <span className="font-bold text-[#17202d] capitalize">
-                {navItems.find((n) => n.id === activeTab)?.label}
-              </span>
+            <div className="text-xs text-[#748092] flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab("dashboard")}
+                className={`font-semibold transition-colors hover:text-[#c58b4b] ${
+                  activeTab === "dashboard"
+                    ? "text-[#17202d] font-bold"
+                    : "text-[#748092]"
+                }`}
+              >
+                Studio Overview
+              </button>
+              {activeTab !== "dashboard" && (
+                <>
+                  <span>/</span>
+                  <span className="font-bold text-[#17202d] capitalize">
+                    {navItems.find((n) => n.id === activeTab)?.label}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("dashboard")}
+                    className="ml-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#f5f6f8] hover:bg-[#c58b4b]/10 text-[11px] font-bold text-[#566273] hover:text-[#a56f35] border border-[#dfe4eb] transition-all"
+                    title="Return to Dashboard Overview"
+                  >
+                    <ArrowLeft className="w-3 h-3" />
+                    <span>Back to Overview</span>
+                  </button>
+                </>
+              )}
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowDeadStockInfoModal(true)}
+              className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold flex items-center gap-1.5 transition shadow-2xs"
+              title="View Dead Stock & Ageing Rules"
+            >
+              <Info className="w-3.5 h-3.5 text-amber-600" />
+              <span className="hidden sm:inline">Dead Stock Policy</span>
+            </button>
           </div>
         </header>
 
@@ -1383,85 +1384,138 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                 </div>
               </div>
 
-              {/* Top 4 KPI Cards */}
+              {/* Top 4 KPI Cards (Redirectable to Source Modules) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* KPI 1 */}
-                <div className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs">
-                  <div className="flex items-center justify-between text-[#748092] text-xs font-medium">
-                    <span>Styles Costed</span>
-                    <Shirt className="w-4 h-4 text-[#c58b4b]" />
-                  </div>
-                  <div className="text-2xl font-extrabold text-[#17202d] mt-2">
-                    {products.length}
-                  </div>
-                  <div className="text-[11px] text-[#748092] mt-1 flex items-center gap-1">
-                    <span className="text-[#16835d] font-semibold">
-                      Active Catalog
-                    </span>
-                    <span>· ready for sampling</span>
-                  </div>
-                </div>
-
-                {/* KPI 2 */}
-                <div className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs">
-                  <div className="flex items-center justify-between text-[#748092] text-xs font-medium">
-                    <span>Average Making Cost / MRP</span>
-                    <Percent className="w-4 h-4 text-[#c58b4b]" />
-                  </div>
-                  <div
-                    className={`text-2xl font-extrabold mt-2 ${
-                      avgCogsPct <= (config.defaultTargetCogsPct || 20)
-                        ? "text-[#16835d]"
-                        : "text-[#c44e4e]"
-                    }`}
-                  >
-                    {formatPct(avgCogsPct)}
-                  </div>
-                  <div className="text-[11px] text-[#748092] mt-1">
-                    {avgCogsPct <= (config.defaultTargetCogsPct || 20) ? (
+                {/* KPI 1: Costed SKUs -> Costing Studio */}
+                <div
+                  onClick={() => setActiveTab("costing")}
+                  className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs hover:border-[#c58b4b] hover:shadow-md cursor-pointer transition-all duration-200 group flex flex-col justify-between"
+                  title="Click to open Costing Studio"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-[#748092] text-xs font-medium">
+                      <span>Styles Costed</span>
+                      <Shirt className="w-4 h-4 text-[#c58b4b] group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="text-2xl font-extrabold text-[#17202d] mt-2">
+                      {products.length}
+                    </div>
+                    <div className="text-[11px] text-[#748092] mt-1 flex items-center gap-1">
                       <span className="text-[#16835d] font-semibold">
-                        ✓ Meets {config.defaultTargetCogsPct || 20}% target
+                        Active Catalog
                       </span>
-                    ) : (
-                      <span className="text-[#c44e4e] font-semibold">
-                        ⚠ Exceeds {config.defaultTargetCogsPct || 20}% target
-                        ceiling
-                      </span>
-                    )}
+                      <span>· ready for sampling</span>
+                    </div>
+                  </div>
+                  <div className="pt-3 mt-3 border-t border-[#f0f2f5] flex items-center justify-between text-[11px] font-bold text-[#c58b4b] group-hover:text-[#a56f35]">
+                    <span>Open Costing Studio</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
 
-                {/* KPI 3 */}
-                <div className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs">
-                  <div className="flex items-center justify-between text-[#748092] text-xs font-medium">
-                    <span>Warehouse Stock On-Hand</span>
-                    <Layers className="w-4 h-4 text-[#c58b4b]" />
+                {/* KPI 2: Target COGS % -> Costing Studio */}
+                <div
+                  onClick={() => setActiveTab("costing")}
+                  className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs hover:border-[#c58b4b] hover:shadow-md cursor-pointer transition-all duration-200 group flex flex-col justify-between"
+                  title="Click to review Garment Economics & Benchmarks"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-[#748092] text-xs font-medium">
+                      <span>Average Making Cost / MRP</span>
+                      <Percent className="w-4 h-4 text-[#c58b4b] group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div
+                      className={`text-2xl font-extrabold mt-2 ${
+                        avgCogsPct <= (config.defaultTargetCogsPct || 20)
+                          ? "text-[#16835d]"
+                          : "text-[#c44e4e]"
+                      }`}
+                    >
+                      {formatPct(avgCogsPct)}
+                    </div>
+                    <div className="text-[11px] text-[#748092] mt-1">
+                      {avgCogsPct <= (config.defaultTargetCogsPct || 20) ? (
+                        <span className="text-[#16835d] font-semibold">
+                          ✓ Meets {config.defaultTargetCogsPct || 20}% target
+                        </span>
+                      ) : (
+                        <span className="text-[#c44e4e] font-semibold">
+                          ⚠ Exceeds {config.defaultTargetCogsPct || 20}% target
+                          ceiling
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-2xl font-extrabold text-[#17202d] mt-2">
-                    {totalStockOnHand} pcs
-                  </div>
-                  <div className="text-[11px] text-[#748092] mt-1 flex items-center gap-1">
-                    <span className="text-[#a66a1d] font-semibold">
-                      {atRiskQty} pcs at risk
-                    </span>
-                    <span>(&gt;{config.ageThresholdActive || 30} days)</span>
+                  <div className="pt-3 mt-3 border-t border-[#f0f2f5] flex items-center justify-between text-[11px] font-bold text-[#c58b4b] group-hover:text-[#a56f35]">
+                    <span>Check Target Economics</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
 
-                {/* KPI 4 */}
-                <div className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs">
-                  <div className="flex items-center justify-between text-[#748092] text-xs font-medium">
-                    <span>Blocked Capital at Cost</span>
-                    <Building2 className="w-4 h-4 text-[#c58b4b]" />
+                {/* KPI 3: Stock On-Hand -> Stock Overview */}
+                <div
+                  onClick={() => setActiveTab("stock_top")}
+                  className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs hover:border-[#c58b4b] hover:shadow-md cursor-pointer transition-all duration-200 group flex flex-col justify-between"
+                  title="Click to view Stock-Wise Valuation"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-[#748092] text-xs font-medium">
+                      <span>Warehouse Stock On-Hand</span>
+                      <Layers className="w-4 h-4 text-[#c58b4b] group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="text-2xl font-extrabold text-[#17202d] mt-2">
+                      {totalStockOnHand} pcs
+                    </div>
+                    <div className="text-[11px] text-[#748092] mt-1 flex items-center gap-1">
+                      <span className="text-[#a66a1d] font-semibold">
+                        {atRiskQty} pcs at risk
+                      </span>
+                      <span>(&gt;{config.ageThresholdActive || 30} days)</span>
+                    </div>
                   </div>
-                  <div className="text-2xl font-extrabold text-[#c44e4e] mt-2">
-                    {formatINR(totalBlockedCapital, true)}
+                  <div className="pt-3 mt-3 border-t border-[#f0f2f5] flex items-center justify-between text-[11px] font-bold text-[#c58b4b] group-hover:text-[#a56f35]">
+                    <span>Inspect Stock Valuation</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </div>
-                  <div className="text-[11px] text-[#748092] mt-1">
-                    <span>
-                      Bleeding ~{formatINR(monthlyBleed)}/mo at{" "}
-                      {config.defaultCarryingCostPct || 18}%/yr
-                    </span>
+                </div>
+
+                {/* KPI 4: Blocked Capital -> Dead Stock & Liquidation */}
+                <div
+                  onClick={() => setActiveTab("liquidation")}
+                  className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs hover:border-red-400 hover:shadow-md cursor-pointer transition-all duration-200 group flex flex-col justify-between"
+                  title="Click to manage Dead Stock & Liquidation"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-[#748092] text-xs font-medium">
+                      <span className="flex items-center gap-1.5">
+                        <span>Blocked Capital at Cost</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowDeadStockInfoModal(true);
+                          }}
+                          className="text-gray-400 hover:text-[#c58b4b] transition-colors p-0.5"
+                          title="View Dead Stock Ageing Policy & Conditions"
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                        </button>
+                      </span>
+                      <Building2 className="w-4 h-4 text-[#c44e4e] group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="text-2xl font-extrabold text-[#c44e4e] mt-2">
+                      {formatINR(totalBlockedCapital, true)}
+                    </div>
+                    <div className="text-[11px] text-[#748092] mt-1">
+                      <span>
+                        Bleeding ~{formatINR(monthlyBleed)}/mo at{" "}
+                        {config.defaultCarryingCostPct || 18}%/yr
+                      </span>
+                    </div>
+                  </div>
+                  <div className="pt-3 mt-3 border-t border-[#f0f2f5] flex items-center justify-between text-[11px] font-bold text-[#c44e4e] group-hover:text-red-700">
+                    <span>Act on Dead Stock</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
               </div>
@@ -1475,9 +1529,15 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                       <h3 className="font-bold text-sm text-[#17202d]">
                         Cost Structure: {activeProduct?.name || "Everyday Tee"}
                       </h3>
-                      <span className="text-[11px] font-semibold bg-[#f5eadc] text-[#815b31] px-2 py-0.5 rounded-md">
-                        Making Cost: {formatINR(liveEco.totalCogs)}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("costing")}
+                        className="text-[11px] font-semibold bg-[#f5eadc] hover:bg-[#ebd8c0] text-[#815b31] px-2.5 py-1 rounded-md transition flex items-center gap-1"
+                        title="Click to edit BOM in Costing Studio"
+                      >
+                        <span>Making Cost: {formatINR(liveEco.totalCogs)}</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
                     </div>
                     <p className="text-xs text-[#748092] mt-1">
                       Direct per-piece making costs for this garment before
@@ -1566,9 +1626,14 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                       <h3 className="font-bold text-sm text-[#17202d]">
                         Money Journey (Waterfall per Sold Piece)
                       </h3>
-                      <span className="text-[11px] font-semibold text-[#748092]">
-                        {activeProduct?.sku}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("costing")}
+                        className="text-[11px] font-semibold text-[#c58b4b] hover:text-[#a56f35] hover:underline flex items-center gap-1"
+                      >
+                        <span>{activeProduct?.sku}</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
                     </div>
                     <p className="text-xs text-[#748092] mt-1">
                       See step-by-step what remains after customer discounts,
@@ -1660,12 +1725,20 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-[#e7eaf0] text-[11px] text-[#748092] flex items-center gap-1.5">
-                    <AlertCircle className="w-3.5 h-3.5 text-[#c58b4b]" />
-                    <span>
-                      Fixed factory rent & tailor salaries are kept separate
-                      below CM3 per Atiq instructions.
+                  <div className="mt-5 pt-4 border-t border-[#e7eaf0] text-xs text-[#748092] flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-[11px]">
+                      <AlertCircle className="w-3.5 h-3.5 text-[#c58b4b] shrink-0" />
+                      <span>
+                        Rent & fixed tailor salaries kept separate below CM3
+                      </span>
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("expenses")}
+                      className="font-bold text-xs text-[#c58b4b] hover:underline shrink-0"
+                    >
+                      View Overheads →
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1791,6 +1864,18 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
           {/* ======================================================== */}
           {activeTab === "costing" && (
             <div className="space-y-5 sm:space-y-6 min-w-0 w-full">
+              {/* Back to Overview */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("dashboard")}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#748092] hover:text-[#c58b4b] transition-colors group"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+                  <span>Back to Dashboard Overview</span>
+                </button>
+              </div>
+
               {/* Top Banner & Control Deck */}
               <div className="flex flex-col gap-3.5 min-w-0 w-full">
                 <div className="flex flex-col gap-1 min-w-0">
@@ -1917,20 +2002,9 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                         />
                       </div>
                       <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <label className="block text-[11px] font-bold text-[#566273]">
-                            Garment Category
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => setIsAddCategoryModalOpen(true)}
-                            className="text-[10px] font-bold text-[#c58b4b] hover:underline flex items-center gap-0.5"
-                            title="Add new category"
-                          >
-                            <Plus className="w-3 h-3" />
-                            <span>Add New</span>
-                          </button>
-                        </div>
+                        <label className="block text-[11px] font-bold text-[#566273] mb-1">
+                          Garment Category
+                        </label>
                         <select
                           value={costForm.category}
                           onChange={(e) =>
@@ -1996,7 +2070,8 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                           <span>2. Making Cost per Piece (COGS)</span>
                         </h3>
                         <p className="text-[11px] text-[#748092]">
-                          Kapda (fabric), Trims (buttons, zippers, fusing, pads, hooks), Silai, Cutting & Packaging
+                          Kapda (fabric), Trims (buttons, zippers, fusing, pads,
+                          hooks), Silai, Cutting & Packaging
                         </p>
                       </div>
                       <span className="self-start sm:self-auto text-xs font-black text-[#17202d] bg-gray-100 px-2.5 py-1 rounded-lg">
@@ -2088,7 +2163,9 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                             </h4>
                           </div>
                           <p className="text-[11px] text-[#748092] mt-0.5">
-                            Specific section for: Buttons & Zippers (CFC / Concealed), Fusing & Lining, Shoulder Pad, and Eye Hook
+                            Specific section for: Buttons & Zippers (CFC /
+                            Concealed), Fusing & Lining, Shoulder Pad, and Eye
+                            Hook
                           </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
@@ -2097,7 +2174,10 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                               Preset:
                             </span>
                             <select
-                              value={costForm.trimsDetail?.preset || "Western Dress / Top"}
+                              value={
+                                costForm.trimsDetail?.preset ||
+                                "Western Dress / Top"
+                              }
                               onChange={(e) => applyTrimsPreset(e.target.value)}
                               className="bg-transparent text-xs font-bold text-[#17202d] outline-none cursor-pointer"
                             >
@@ -2126,7 +2206,9 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                             type="text"
                             value={costForm.trimsDetail?.buttonsCost ?? 6}
                             onChange={(e) =>
-                              updateTrimsField({ buttonsCost: Number(e.target.value) })
+                              updateTrimsField({
+                                buttonsCost: Number(e.target.value),
+                              })
                             }
                             className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium outline-none focus:border-[#c58b4b]"
                           />
@@ -2143,13 +2225,18 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                                 Zipper Type (Boss Spec)
                               </label>
                               <select
-                                value={costForm.trimsDetail?.zipperType || "Concealed Zipper"}
+                                value={
+                                  costForm.trimsDetail?.zipperType ||
+                                  "Concealed Zipper"
+                                }
                                 onChange={(e) => {
                                   const zType = e.target.value;
                                   let defaultZCost = 0;
                                   if (zType === "CFC Zipper") defaultZCost = 8;
-                                  else if (zType === "Concealed Zipper") defaultZCost = 10;
-                                  else if (zType === "Metal Zipper") defaultZCost = 14;
+                                  else if (zType === "Concealed Zipper")
+                                    defaultZCost = 10;
+                                  else if (zType === "Metal Zipper")
+                                    defaultZCost = 14;
                                   updateTrimsField({
                                     zipperType: zType,
                                     zipperCost: defaultZCost,
@@ -2157,10 +2244,18 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                                 }}
                                 className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-[#17202d] outline-none focus:border-[#c58b4b] bg-white"
                               >
-                                <option value="None">None / No Zipper (₹0)</option>
-                                <option value="CFC Zipper">CFC Zipper (Coil / Continuous)</option>
-                                <option value="Concealed Zipper">Concealed Zipper (Invisible)</option>
-                                <option value="Metal Zipper">Metal / Vislon Zipper</option>
+                                <option value="None">
+                                  None / No Zipper (₹0)
+                                </option>
+                                <option value="CFC Zipper">
+                                  CFC Zipper (Coil / Continuous)
+                                </option>
+                                <option value="Concealed Zipper">
+                                  Concealed Zipper (Invisible)
+                                </option>
+                                <option value="Metal Zipper">
+                                  Metal / Vislon Zipper
+                                </option>
                               </select>
                             </div>
                             <div>
@@ -2171,14 +2266,17 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                                 type="text"
                                 value={costForm.trimsDetail?.zipperCost ?? 8}
                                 onChange={(e) =>
-                                  updateTrimsField({ zipperCost: Number(e.target.value) })
+                                  updateTrimsField({
+                                    zipperCost: Number(e.target.value),
+                                  })
                                 }
                                 className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium outline-none focus:border-[#c58b4b]"
                               />
                             </div>
                           </div>
                           <span className="text-[10px] text-[#748092] mt-1 block">
-                            Zippers are categorized into CFC & Concealed (invisible dresses/skirts)
+                            Zippers are categorized into CFC & Concealed
+                            (invisible dresses/skirts)
                           </span>
                         </div>
 
@@ -2191,7 +2289,9 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                             type="text"
                             value={costForm.trimsDetail?.fusingLiningCost ?? 5}
                             onChange={(e) =>
-                              updateTrimsField({ fusingLiningCost: Number(e.target.value) })
+                              updateTrimsField({
+                                fusingLiningCost: Number(e.target.value),
+                              })
                             }
                             className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium outline-none focus:border-[#c58b4b]"
                           />
@@ -2207,12 +2307,15 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                           </label>
                           <div className="flex items-center gap-1.5">
                             <select
-                              value={costForm.trimsDetail?.shoulderPadType || "None"}
+                              value={
+                                costForm.trimsDetail?.shoulderPadType || "None"
+                              }
                               onChange={(e) => {
                                 const sType = e.target.value;
                                 let padCost = 0;
                                 if (sType === "Standard Poly Pad") padCost = 8;
-                                else if (sType === "Molded Tailored Pad") padCost = 15;
+                                else if (sType === "Molded Tailored Pad")
+                                  padCost = 15;
                                 updateTrimsField({
                                   shoulderPadType: sType,
                                   shoulderPadCost: padCost,
@@ -2221,15 +2324,21 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                               className="w-1/2 px-2 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-semibold outline-none bg-white"
                             >
                               <option value="None">None (₹0)</option>
-                              <option value="Standard Poly Pad">Standard (₹8)</option>
-                              <option value="Molded Tailored Pad">Molded (₹15)</option>
+                              <option value="Standard Poly Pad">
+                                Standard (₹8)
+                              </option>
+                              <option value="Molded Tailored Pad">
+                                Molded (₹15)
+                              </option>
                               <option value="Custom">Custom</option>
                             </select>
                             <input
                               type="text"
                               value={costForm.trimsDetail?.shoulderPadCost ?? 0}
                               onChange={(e) =>
-                                updateTrimsField({ shoulderPadCost: Number(e.target.value) })
+                                updateTrimsField({
+                                  shoulderPadCost: Number(e.target.value),
+                                })
                               }
                               className="w-1/2 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium outline-none focus:border-[#c58b4b]"
                             />
@@ -2248,7 +2357,9 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                             type="text"
                             value={costForm.trimsDetail?.eyeHookCost ?? 2}
                             onChange={(e) =>
-                              updateTrimsField({ eyeHookCost: Number(e.target.value) })
+                              updateTrimsField({
+                                eyeHookCost: Number(e.target.value),
+                              })
                             }
                             className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium outline-none focus:border-[#c58b4b]"
                           />
@@ -2264,9 +2375,13 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                           </label>
                           <input
                             type="text"
-                            value={costForm.trimsDetail?.labelsAndThreadCost ?? 3}
+                            value={
+                              costForm.trimsDetail?.labelsAndThreadCost ?? 3
+                            }
                             onChange={(e) =>
-                              updateTrimsField({ labelsAndThreadCost: Number(e.target.value) })
+                              updateTrimsField({
+                                labelsAndThreadCost: Number(e.target.value),
+                              })
                             }
                             className="w-full px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-medium outline-none focus:border-[#c58b4b]"
                           />
@@ -2281,7 +2396,8 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                         <div className="flex items-center gap-1.5 text-[#525f43]">
                           <CheckCircle2 className="w-4 h-4 text-[#758a56] shrink-0" />
                           <span>
-                            Trims components sum to: <strong>₹{costForm.trimsCost}</strong> / pc
+                            Trims components sum to:{" "}
+                            <strong>₹{costForm.trimsCost}</strong> / pc
                           </span>
                         </div>
                         <div className="flex items-center gap-2 self-end sm:self-auto">
@@ -2359,7 +2475,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                         </div>
                         <div>
                           <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                            Packaging  (₹)
+                            Packaging (₹)
                           </label>
                           <input
                             type="text"
@@ -2929,8 +3045,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                 </div>
               </div>
 
-             
-
               {/* Mobile Floating Quick Summary Bar (Only when on mobile and in 'inputs' tab) */}
               {costingMobileTab === "inputs" && (
                 <div className="lg:hidden fixed bottom-4 left-3 right-3 z-30 bg-[#111c2d] text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-[#2a3c57] flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
@@ -2970,6 +3084,18 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
           {/* ======================================================== */}
           {activeTab === "revenue" && (
             <div className="space-y-6">
+              {/* Back to Overview */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("dashboard")}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#748092] hover:text-[#c58b4b] transition-colors group"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+                  <span>Back to Dashboard Overview</span>
+                </button>
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#c58b4b]">
@@ -3348,6 +3474,18 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
           {/* ======================================================== */}
           {activeTab === "profitability" && (
             <div className="space-y-6">
+              {/* Back to Overview */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("dashboard")}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#748092] hover:text-[#c58b4b] transition-colors group"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+                  <span>Back to Dashboard Overview</span>
+                </button>
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#c58b4b]">
@@ -3546,6 +3684,18 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
           {/* ======================================================== */}
           {activeTab === "stock_top" && (
             <div className="space-y-6">
+              {/* Back to Overview */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("dashboard")}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#748092] hover:text-[#c58b4b] transition-colors group"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+                  <span>Back to Dashboard Overview</span>
+                </button>
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#c58b4b]">
@@ -3560,6 +3710,15 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowDeadStockInfoModal(true)}
+                    className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold flex items-center gap-1.5 transition"
+                    title="View Dead Stock & Ageing Rules"
+                  >
+                    <Info className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Ageing Policy</span>
+                  </button>
                   <div className="relative">
                     <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#748092]" />
                     <input
@@ -3638,17 +3797,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                               {b.ageDays}d
                             </td>
                             <td className="py-3 px-3">
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                  b.status === "Active"
-                                    ? "bg-[#edf7f2] text-[#16835d]"
-                                    : b.status === "Ageing"
-                                      ? "bg-[#fff4e5] text-[#a66a1d]"
-                                      : "bg-[#fff0f0] text-[#c44e4e]"
-                                }`}
-                              >
-                                {b.status}
-                              </span>
+                              {renderBatchStatusBadge(b.status)}
                             </td>
                           </tr>
                         ))}
@@ -3664,6 +3813,18 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
           {/* ======================================================== */}
           {activeTab === "batches" && (
             <div className="space-y-6">
+              {/* Back to Overview */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("dashboard")}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#748092] hover:text-[#c58b4b] transition-colors group"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+                  <span>Back to Dashboard Overview</span>
+                </button>
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#c58b4b]">
@@ -3676,6 +3837,17 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     Historical making cost stays locked at time of production so
                     past accounting remains clean.
                   </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowDeadStockInfoModal(true)}
+                    className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold flex items-center gap-1.5 transition"
+                    title="View Dead Stock & Ageing Rules"
+                  >
+                    <Info className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Dead Stock Policy</span>
+                  </button>
                 </div>
               </div>
 
@@ -3898,17 +4070,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                             {b.ageDays}d
                           </td>
                           <td className="py-3 px-3">
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                b.status === "Active"
-                                  ? "bg-[#edf7f2] text-[#16835d]"
-                                  : b.status === "Ageing"
-                                    ? "bg-[#fff4e5] text-[#a66a1d]"
-                                    : "bg-[#fff0f0] text-[#c44e4e]"
-                              }`}
-                            >
-                              {b.status}
-                            </span>
+                            {renderBatchStatusBadge(b.status)}
                           </td>
                           <td className="py-3 px-3 text-right">
                             <button
@@ -3933,6 +4095,18 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
           {/* ======================================================== */}
           {activeTab === "liquidation" && (
             <div className="space-y-6">
+              {/* Back to Overview */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("dashboard")}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#748092] hover:text-[#c58b4b] transition-colors group"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+                  <span>Back to Dashboard Overview</span>
+                </button>
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#c58b4b]">
@@ -3945,6 +4119,17 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     Act on ageing batches before they turn into complete
                     dead-loss write-offs.
                   </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowDeadStockInfoModal(true)}
+                    className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold flex items-center gap-1.5 transition"
+                    title="View Dead Stock & Ageing Rules"
+                  >
+                    <Info className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Dead Stock Policy</span>
+                  </button>
                 </div>
               </div>
 
@@ -4126,9 +4311,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                                 : "—"}
                             </td>
                             <td className="py-3 px-3">
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#fff0f0] text-[#c44e4e]">
-                                {b.status}
-                              </span>
+                              {renderBatchStatusBadge(b.status)}
                             </td>
                             <td className="py-3 px-3 text-right space-x-2">
                               <button
@@ -4166,6 +4349,18 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
           {/* ======================================================== */}
           {activeTab === "returns" && (
             <div className="space-y-6">
+              {/* Back to Overview */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("dashboard")}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#748092] hover:text-[#c58b4b] transition-colors group"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+                  <span>Back to Dashboard Overview</span>
+                </button>
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#c58b4b]">
@@ -4588,6 +4783,18 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
           {/* ======================================================== */}
           {activeTab === "expenses" && (
             <div className="space-y-6">
+              {/* Back to Overview */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("dashboard")}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#748092] hover:text-[#c58b4b] transition-colors group"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+                  <span>Back to Dashboard Overview</span>
+                </button>
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#c58b4b]">
@@ -4851,6 +5058,18 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
           {/* ======================================================== */}
           {activeTab === "skus" && (
             <div className="space-y-6">
+              {/* Back to Overview */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("dashboard")}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#748092] hover:text-[#c58b4b] transition-colors group"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+                  <span>Back to Dashboard Overview</span>
+                </button>
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#c58b4b]">
@@ -4974,6 +5193,18 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
           {/* ======================================================== */}
           {activeTab === "settings" && (
             <div className="space-y-6">
+              {/* Back to Overview */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("dashboard")}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#748092] hover:text-[#c58b4b] transition-colors group"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+                  <span>Back to Dashboard Overview</span>
+                </button>
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#c58b4b]">
@@ -5030,309 +5261,305 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                 </div>
               </div>
 
-              {/* Garment Categories Master Configuration */}
-              <div className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#e7eaf0] pb-3">
+             
+
+              {/* Normalized Side-by-Side Cards: Equal Heights */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                {/* Default Rates (6 Balanced Inputs) */}
+                <div className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs space-y-4 h-full flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-sm text-[#17202d] flex items-center gap-2">
-                      <Shirt className="w-4 h-4 text-[#c58b4b] shrink-0" />
-                      <span>Garment Categories Master Directory</span>
+                    <h3 className="font-bold text-sm text-[#17202d] border-b border-[#e7eaf0] pb-2">
+                      Default Factory Rates (Pre-filled in New Costing)
                     </h3>
-                    <p className="text-[11px] text-[#748092]">
-                      Configure options available in the Garment Category dropdown across the Costing Studio and SKU Catalog.
-                    </p>
+
+                    <div className="space-y-3 mt-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-[#17202d]">
+                            Default Fabric Rate
+                          </span>
+                          <p className="text-[10px] text-[#748092]">
+                            ₹ per metre benchmark
+                          </p>
+                        </div>
+                        <input
+                          type="text"
+                          value={config.defaultFabricRate}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              defaultFabricRate: Number(e.target.value),
+                            })
+                          }
+                          className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-[#17202d]">
+                            Default Cutting Rate
+                          </span>
+                          <p className="text-[10px] text-[#748092]">
+                            ₹ per piece
+                          </p>
+                        </div>
+                        <input
+                          type="text"
+                          value={config.defaultCutting}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              defaultCutting: Number(e.target.value),
+                            })
+                          }
+                          className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-[#17202d]">
+                            Default Stitching Rate
+                          </span>
+                          <p className="text-[10px] text-[#748092]">
+                            ₹ per piece
+                          </p>
+                        </div>
+                        <input
+                          type="text"
+                          value={config.defaultStitching}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              defaultStitching: Number(e.target.value),
+                            })
+                          }
+                          className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-[#17202d]">
+                            Default Finishing & QC
+                          </span>
+                          <p className="text-[10px] text-[#748092]">
+                            ₹ per piece
+                          </p>
+                        </div>
+                        <input
+                          type="text"
+                          value={config.defaultFinishing}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              defaultFinishing: Number(e.target.value),
+                            })
+                          }
+                          className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-[#17202d]">
+                            Default Forward Courier
+                          </span>
+                          <p className="text-[10px] text-[#748092]">
+                            ₹ per shipment
+                          </p>
+                        </div>
+                        <input
+                          type="text"
+                          value={config.defaultLogisticsCost}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              defaultLogisticsCost: Number(e.target.value),
+                            })
+                          }
+                          className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-[#17202d]">
+                            Default Reverse Courier
+                          </span>
+                          <p className="text-[10px] text-[#748092]">
+                            ₹ per return
+                          </p>
+                        </div>
+                        <input
+                          type="text"
+                          value={config.defaultReverseLogisticsCost}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              defaultReverseLogisticsCost: Number(
+                                e.target.value,
+                              ),
+                            })
+                          }
+                          className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-xs font-bold bg-amber-50 text-[#a66a1d] px-2.5 py-1 rounded-lg">
-                    {garmentCategoriesList.length} Active Categories
-                  </span>
-                </div>
-
-                {/* Categories Pills */}
-                <div className="flex flex-wrap gap-2">
-                  {garmentCategoriesList.map((cat) => (
-                    <div
-                      key={cat}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f6f8] border border-[#dfe4eb] rounded-xl text-xs font-bold text-[#17202d] group hover:border-[#c58b4b] transition"
-                    >
-                      <span>{cat}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteGarmentCategory(cat)}
-                        className="text-gray-400 hover:text-red-500 p-0.5 rounded transition"
-                        title={`Delete ${cat}`}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Add Category Input */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2 border-t border-[#f0f2f5]">
-                  <input
-                    type="text"
-                    placeholder="e.g. Athleisure, Winterwear, Loungewear..."
-                    value={newGarmentCategoryInput}
-                    onChange={(e) => setNewGarmentCategoryInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddGarmentCategory();
-                      }
-                    }}
-                    className="flex-1 max-w-sm px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-medium outline-none focus:border-[#c58b4b]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleAddGarmentCategory()}
-                    className="px-4 py-2 bg-[#111c2d] hover:bg-[#1e2f47] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 active:scale-95"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-[#c58b4b]" />
-                    <span>Add Garment Category</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Default Rates */}
-                <div className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs space-y-4">
-                  <h3 className="font-bold text-sm text-[#17202d] border-b border-[#e7eaf0] pb-2">
-                    Default Factory Rates (Pre-filled in New Costing)
-                  </h3>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-[#17202d]">
-                          Default Fabric Rate
-                        </span>
-                        <p className="text-[10px] text-[#748092]">
-                          ₹ per metre benchmark
-                        </p>
-                      </div>
-                      <input
-                        type="text"
-                        value={config.defaultFabricRate}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            defaultFabricRate: Number(e.target.value),
-                          })
-                        }
-                        className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-[#17202d]">
-                          Default Cutting Rate
-                        </span>
-                        <p className="text-[10px] text-[#748092]">
-                          ₹ per piece
-                        </p>
-                      </div>
-                      <input
-                        type="text"
-                        value={config.defaultCutting}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            defaultCutting: Number(e.target.value),
-                          })
-                        }
-                        className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-[#17202d]">
-                          Default Stitching Rate
-                        </span>
-                        <p className="text-[10px] text-[#748092]">
-                          ₹ per piece
-                        </p>
-                      </div>
-                      <input
-                        type="text"
-                        value={config.defaultStitching}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            defaultStitching: Number(e.target.value),
-                          })
-                        }
-                        className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-[#17202d]">
-                          Default Finishing & QC
-                        </span>
-                        <p className="text-[10px] text-[#748092]">
-                          ₹ per piece
-                        </p>
-                      </div>
-                      <input
-                        type="text"
-                        value={config.defaultFinishing}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            defaultFinishing: Number(e.target.value),
-                          })
-                        }
-                        className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-[#17202d]">
-                          Default Forward Courier
-                        </span>
-                        <p className="text-[10px] text-[#748092]">
-                          ₹ per shipment
-                        </p>
-                      </div>
-                      <input
-                        type="text"
-                        value={config.defaultLogisticsCost}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            defaultLogisticsCost: Number(e.target.value),
-                          })
-                        }
-                        className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-[#17202d]">
-                          Default Reverse Courier
-                        </span>
-                        <p className="text-[10px] text-[#748092]">
-                          ₹ per return
-                        </p>
-                      </div>
-                      <input
-                        type="text"
-                        value={config.defaultReverseLogisticsCost}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            defaultReverseLogisticsCost: Number(e.target.value),
-                          })
-                        }
-                        className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
-                      />
-                    </div>
+                  <div className="pt-3 border-t border-[#f0f2f5] text-[10px] text-[#748092]">
+                    Pre-populated into newly created cost sheets
                   </div>
                 </div>
 
-                {/* Commercial Benchmarks */}
-                <div className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs space-y-4">
-                  <h3 className="font-bold text-sm text-[#17202d] border-b border-[#e7eaf0] pb-2">
-                    Commercial Multipliers & Benchmarks
-                  </h3>
+                {/* Commercial Benchmarks (6 Balanced Inputs) */}
+                <div className="bg-white border border-[#e7eaf0] rounded-2xl p-5 shadow-2xs space-y-4 h-full flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-sm text-[#17202d] border-b border-[#e7eaf0] pb-2">
+                      Commercial Multipliers & Benchmarks
+                    </h3>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-[#17202d]">
-                          Pricing Multiplier
-                        </span>
-                        <p className="text-[10px] text-[#748092]">
-                          Making Cost × Multiplier = Suggested MRP
-                        </p>
+                    <div className="space-y-3 mt-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-[#17202d]">
+                            Pricing Multiplier
+                          </span>
+                          <p className="text-[10px] text-[#748092]">
+                            Making Cost × Multiplier = Suggested MRP
+                          </p>
+                        </div>
+                        <input
+                          type="text"
+                          step="0.1"
+                          value={config.defaultPricingMultiplier}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              defaultPricingMultiplier: Number(e.target.value),
+                            })
+                          }
+                          className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        step="0.1"
-                        value={config.defaultPricingMultiplier}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            defaultPricingMultiplier: Number(e.target.value),
-                          })
-                        }
-                        className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
-                      />
-                    </div>
 
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-[#17202d]">
-                          Making Cost Target Limit
-                        </span>
-                        <p className="text-[10px] text-[#748092]">
-                          Maximum allowable % of MRP
-                        </p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-[#17202d]">
+                            Making Cost Target Limit
+                          </span>
+                          <p className="text-[10px] text-[#748092]">
+                            Maximum allowable % of MRP
+                          </p>
+                        </div>
+                        <input
+                          type="text"
+                          value={config.defaultTargetCogsPct}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              defaultTargetCogsPct: Number(e.target.value),
+                            })
+                          }
+                          className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        value={config.defaultTargetCogsPct}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            defaultTargetCogsPct: Number(e.target.value),
-                          })
-                        }
-                        className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
-                      />
-                    </div>
 
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-[#17202d]">
-                          Marketplace Platform Fee
-                        </span>
-                        <p className="text-[10px] text-[#748092]">
-                          Default referral cut %
-                        </p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-[#17202d]">
+                            Marketplace Platform Fee
+                          </span>
+                          <p className="text-[10px] text-[#748092]">
+                            Default referral cut %
+                          </p>
+                        </div>
+                        <input
+                          type="text"
+                          step="0.5"
+                          value={config.defaultMarketplaceCommission}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              defaultMarketplaceCommission: Number(
+                                e.target.value,
+                              ),
+                            })
+                          }
+                          className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        step="0.5"
-                        value={config.defaultMarketplaceCommission}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            defaultMarketplaceCommission: Number(
-                              e.target.value,
-                            ),
-                          })
-                        }
-                        className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
-                      />
-                    </div>
 
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-[#17202d]">
-                          Carrying Cost Rate (% / year)
-                        </span>
-                        <p className="text-[10px] text-[#748092]">
-                          Inventory financing & space bleed
-                        </p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-[#17202d]">
+                            Carrying Cost Rate (% / year)
+                          </span>
+                          <p className="text-[10px] text-[#748092]">
+                            Inventory financing & space bleed
+                          </p>
+                        </div>
+                        <input
+                          type="text"
+                          value={config.defaultCarryingCostPct || 18}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              defaultCarryingCostPct: Number(e.target.value),
+                            })
+                          }
+                          className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        value={config.defaultCarryingCostPct || 18}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            defaultCarryingCostPct: Number(e.target.value),
-                          })
-                        }
-                        className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
-                      />
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-[#17202d]">
+                            Default GST Slab Rate
+                          </span>
+                          <p className="text-[10px] text-[#748092]">
+                            Standard garment GST (5% / 12%)
+                          </p>
+                        </div>
+                        <input
+                          type="text"
+                          value={config.defaultGstPct || 5}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              defaultGstPct: Number(e.target.value),
+                            })
+                          }
+                          className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-[#17202d]">
+                            Default Expected Return Rate
+                          </span>
+                          <p className="text-[10px] text-[#748092]">
+                            Baseline provision % for returns
+                          </p>
+                        </div>
+                        <input
+                          type="text"
+                          value={config.defaultExpectedReturnsPct || 10}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              defaultExpectedReturnsPct: Number(e.target.value),
+                            })
+                          }
+                          className="w-24 px-2.5 py-1.5 border border-[#dfe4eb] rounded-lg text-xs font-bold text-right"
+                        />
+                      </div>
                     </div>
+                  </div>
+                  <div className="pt-3 border-t border-[#f0f2f5] text-[10px] text-[#748092]">
+                    Threshold ceilings used in CM margin and cashflow analysis
                   </div>
                 </div>
               </div>
@@ -5724,65 +5951,133 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
         </div>
       )}
 
-      {/* Add Garment Category Modal */}
-      {isAddCategoryModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-[#dfe4eb] space-y-4">
-            <div className="flex items-center justify-between border-b border-[#e7eaf0] pb-3">
-              <div className="flex items-center gap-2">
-                <Shirt className="w-4 h-4 text-[#c58b4b]" />
-                <h3 className="font-bold text-sm text-[#17202d]">
-                  Add Garment Category
-                </h3>
+      {/* Dead Stock & Inventory Ageing Policy Modal */}
+      {showDeadStockInfoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-[#dfe4eb] space-y-4">
+            <div className="flex items-start justify-between border-b border-[#e7eaf0] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200 shrink-0">
+                  <Info className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm sm:text-base text-[#17202d]">
+                    Inventory Ageing & Dead Stock Classification Rules
+                  </h3>
+                  <p className="text-[11px] text-[#748092]">
+                    Thresholds governing warehouse stock classification,
+                    carrying cost bleed, and liquidation triggers.
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
-                onClick={() => setIsAddCategoryModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 p-1"
+                onClick={() => setShowDeadStockInfoModal(false)}
+                className="p-1 rounded-lg text-gray-400 hover:text-[#17202d] hover:bg-gray-100 transition"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-bold text-[#566273] mb-1">
-                  Category Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Athleisure, Winterwear, Loungewear"
-                  value={newGarmentCategoryInput}
-                  onChange={(e) => setNewGarmentCategoryInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddGarmentCategory();
-                    }
-                  }}
-                  autoFocus
-                  className="w-full px-3 py-2 border border-[#dfe4eb] rounded-xl text-xs font-semibold outline-none focus:border-[#c58b4b]"
-                />
+            <div className="space-y-2.5">
+              {/* Tier 1: Active */}
+              <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50/60 flex items-start gap-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 shrink-0" />
+                <div className="flex-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-emerald-950">
+                      Active Catalog Stock
+                    </span>
+                    <span className="font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-200 text-[10px]">
+                      &lt; {config.ageThresholdActive || 30} Days
+                    </span>
+                  </div>
+                  <p className="text-emerald-800 text-[11px] mt-0.5">
+                    Fresh production batch in prime retail velocity. Sold at
+                    regular MRP or nominal marketing discount (10-15%). Zero
+                    inventory risk.
+                  </p>
+                </div>
               </div>
-              <p className="text-[10px] text-[#748092]">
-                New category will be immediately selectable in the Costing Studio and saved to configuration.
-              </p>
+
+              {/* Tier 2: Ageing */}
+              <div className="p-3 rounded-xl border border-amber-200 bg-amber-50/60 flex items-start gap-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-500 mt-1 shrink-0" />
+                <div className="flex-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-amber-950">
+                      Ageing Stock (Warning Zone)
+                    </span>
+                    <span className="font-bold text-amber-700 bg-white px-2 py-0.5 rounded-md border border-amber-200 text-[10px]">
+                      {config.ageThresholdActive || 30} –{" "}
+                      {config.ageThresholdAgeing || 60} Days
+                    </span>
+                  </div>
+                  <p className="text-amber-800 text-[11px] mt-0.5">
+                    Sales velocity slowing down. Risk of size breakage and
+                    algorithmic rank loss on marketplaces. Recommended action:
+                    boost Meta/Instagram retargeting or increase marketplace
+                    promotion discount.
+                  </p>
+                </div>
+              </div>
+
+              {/* Tier 3: Liquidation */}
+              <div className="p-3 rounded-xl border border-orange-200 bg-orange-50/60 flex items-start gap-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-orange-500 mt-1 shrink-0" />
+                <div className="flex-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-orange-950">
+                      Liquidation Stage (Capital Stuck)
+                    </span>
+                    <span className="font-bold text-orange-700 bg-white px-2 py-0.5 rounded-md border border-orange-200 text-[10px]">
+                      {config.ageThresholdAgeing || 60} –{" "}
+                      {config.ageThresholdLiquidation || 90} Days
+                    </span>
+                  </div>
+                  <p className="text-orange-800 text-[11px] mt-0.5">
+                    Batch is actively locking factory working capital. Atiq CRM
+                    activates the Recovery Calculator to mark down selling price
+                    to recover original manufacturing COGS before full
+                    write-off.
+                  </p>
+                </div>
+              </div>
+
+              {/* Tier 4: Dead Stock */}
+              <div className="p-3 rounded-xl border border-rose-200 bg-rose-50/70 flex items-start gap-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-rose-600 mt-1 shrink-0" />
+                <div className="flex-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-rose-950">
+                      Dead Stock (Severe Loss Risk)
+                    </span>
+                    <span className="font-bold text-rose-700 bg-white px-2 py-0.5 rounded-md border border-rose-200 text-[10px]">
+                      &gt; {config.ageThresholdLiquidation || 90} Days
+                    </span>
+                  </div>
+                  <p className="text-rose-800 text-[11px] mt-0.5">
+                    Stagnant inventory bleeding ~
+                    {config.defaultCarryingCostPct || 18}% annual holding cost
+                    (warehouse rent, dust damage, handling). Immediate flash
+                    clearance sale, bulk offline lot disposal, or fabric salvage
+                    required.
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#e7eaf0]">
+            <div className="pt-3 border-t border-[#e7eaf0] flex items-center justify-between text-xs text-[#748092]">
+              <span>
+                Configure thresholds in{" "}
+                <strong>Settings &gt; Ageing Rules</strong>.
+              </span>
               <button
                 type="button"
-                onClick={() => setIsAddCategoryModalOpen(false)}
-                className="px-3.5 py-1.5 border border-[#dfe4eb] hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-xl"
+                onClick={() => setShowDeadStockInfoModal(false)}
+                className="px-4 py-1.5 bg-[#111c2d] text-white text-xs font-bold rounded-xl hover:bg-[#1f2d44]"
               >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => handleAddGarmentCategory()}
-                className="px-4 py-1.5 bg-[#111c2d] hover:bg-[#1e2f47] text-white text-xs font-bold rounded-xl shadow-xs"
-              >
-                Add Category
+                Understood
               </button>
             </div>
           </div>

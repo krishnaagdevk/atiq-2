@@ -6,7 +6,7 @@ const ProductSchema = new Schema(
     name: { type: String, required: true, trim: true },
     category: {
       type: String,
-      default: "Westernwear",
+      default: "Dresses",
       trim: true,
     },
     fabricType: { type: String, default: "100% Cotton" },

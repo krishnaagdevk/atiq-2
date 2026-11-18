@@ -1,5 +1,16 @@
 // Types & Data Structures for Atiq CRM
 
+export const GARMENT_CATEGORIES = [
+  "Dresses",
+  "Tops & Shirts",
+  "Trousers & Pants",
+  "Co-ord Sets",
+  "Blazers & Jackets",
+  "Jumpsuits",
+] as const;
+
+export type GarmentCategory = (typeof GARMENT_CATEGORIES)[number];
+
 export interface TrimsBreakdown {
   preset?: string;
   buttonsCost?: number;

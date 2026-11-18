@@ -1,10 +1,8 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/atiq_crm";
-
 interface MongooseCache {
   conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
+  promise: Promise<typeof mongoose | null> | null;
 }
 
 declare global {
@@ -18,29 +16,45 @@ if (!global.mongooseCache) {
   global.mongooseCache = cached;
 }
 
-export async function connectDB() {
+export async function connectDB(): Promise<typeof mongoose | null> {
   if (cached.conn) {
     return cached.conn;
   }
 
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    console.warn("⚠️ No MONGODB_URI provided. Running in offline/demo fallback mode.");
+    return null;
+  }
+
   if (!cached.promise) {
-    const opts = {
+    const opts: mongoose.ConnectOptions = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 8000,
-      connectTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
-      return mongooseInstance;
-    });
+    cached.promise = mongoose
+      .connect(uri, opts)
+      .then((mongooseInstance) => {
+        return mongooseInstance;
+      })
+      .catch((err) => {
+        console.warn("⚠️ MongoDB connection failed, falling back to offline mode:", err?.message || err);
+        return null;
+      });
   }
 
   try {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
-    console.warn("MongoDB connection fallback to offline mock mode:", e);
+    console.warn("⚠️ MongoDB connection error, fallback to offline mode:", e);
     return null;
+  }
+
+  if (!cached.conn) {
+    cached.promise = null;
   }
 
   return cached.conn;
