@@ -27,7 +27,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Info,
-  Download,
   Percent,
   Building2,
   Calendar,
@@ -40,7 +39,10 @@ import {
   Sliders,
   Scissors,
   Tag,
+  FileSpreadsheet,
+  Printer,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 
 import {
   ProductCosting,
@@ -1288,6 +1290,155 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
   const projectedLossVsCost = selectedLiqBatch
     ? selectedLiqBatch.blockedCapital - projectedRecoveryRupees
     : 0;
+
+  // Export Complete Profit & Loss Report to Excel (.xlsx)
+  const handleExportPnLToExcel = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+
+      // 1. P&L Executive Summary Sheet
+      const netDeliveredGarments = batches.reduce((a, b) => a + b.netSoldQty, 0);
+      const summaryData = [
+        ["ATIQ STUDIO - PROFIT & LOSS (P&L) REPORT"],
+        ["Generated On", new Date().toLocaleString("en-IN")],
+        ["Reporting Period", currentMonthYearName],
+        [],
+        ["EXECUTIVE METRICS", "VALUE", "NOTES"],
+        ["Net Delivered Garments", netDeliveredGarments, "Garments kept by end customers"],
+        ["Total Product Gross Margin (CM2)", totalProductGrossCM2, "Delivered units gross contribution before factory overheads"],
+        ["Fixed Factory Overhead Burn", totalMonthlyOverheads, "Salaries, Rent, Power & Misc"],
+        ["True Net Factory Profit", trueNetProfit, trueNetProfit >= 0 ? "Cash Surplus ✓" : "Factory in Net Burn ⚠"],
+        [],
+        ["SALES & REVENUE SUMMARY", "VALUE", "NOTES"],
+        ["Gross Sales Revenue", totalGrossRevenue, "Total sales value booked"],
+        ["Return Deductions & Logistics", totalReturnDeduction, "Returns, RTO losses & reverse shipping"],
+        ["Net Revenue Realised", totalNetRevenue, "Final realised revenue"],
+        ["Total Units Sold", totalUnitsSold, "Volume sold in selected period"],
+        [],
+        ["FACTORY OVERHEAD BUDGETS (MONTHLY)", "BUDGET (INR)"],
+        ["Monthly Salaries & Wages", Number(config.monthlySalary || 0)],
+        ["Monthly Factory Rent", Number(config.monthlyRent || 0)],
+        ["Monthly Electricity & Power", Number(config.monthlyElectricity || 0)],
+        ["Monthly Miscellaneous / Other", Number(config.monthlyOther || 0)],
+        ["Total Monthly Overhead Budget", totalMonthlyOverheads],
+      ];
+
+      const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+      wsSummary["!cols"] = [{ wch: 36 }, { wch: 22 }, { wch: 48 }];
+      XLSX.utils.book_append_sheet(wb, wsSummary, "P&L Summary");
+
+      // 2. SKU-Wise Profitability Breakdown
+      const skuHeaders = [
+        "Style SKU",
+        "Style Name",
+        "Garment Category",
+        "MRP (₹)",
+        "Making Cost / COGS (₹)",
+        "CM1 Realisation (₹)",
+        "CM2 Gross (₹)",
+        "CM3 Pocket Cash (₹)",
+        "Margin %",
+        "Profitability Status",
+      ];
+
+      const skuRows = products.map((p) => {
+        const marginPct = p.mrp ? (p.cm3 / p.mrp) * 100 : 0;
+        const status =
+          marginPct >= 15
+            ? "High Margin (>15%)"
+            : marginPct >= 5
+              ? "Healthy Margin (5-15%)"
+              : marginPct >= 0
+                ? "Thin Margin (0-5%)"
+                : "Loss Making (<0%)";
+
+        return [
+          p.sku,
+          p.name,
+          p.category,
+          p.mrp,
+          p.totalCogs,
+          p.cm1,
+          p.cm2,
+          p.cm3,
+          Number(marginPct.toFixed(2)),
+          status,
+        ];
+      });
+
+      const wsSku = XLSX.utils.aoa_to_sheet([
+        ["SKU-WISE PROFITABILITY BREAKDOWN & UNIT ECONOMICS"],
+        ["Report Period", currentMonthYearName],
+        [],
+        skuHeaders,
+        ...skuRows,
+      ]);
+      wsSku["!cols"] = [
+        { wch: 18 },
+        { wch: 28 },
+        { wch: 18 },
+        { wch: 12 },
+        { wch: 22 },
+        { wch: 18 },
+        { wch: 16 },
+        { wch: 18 },
+        { wch: 12 },
+        { wch: 24 },
+      ];
+      XLSX.utils.book_append_sheet(wb, wsSku, "SKU Profitability");
+
+      // 3. Factory Expenses & Overheads
+      const expenseHeaders = [
+        "Date",
+        "Expense Category",
+        "Description",
+        "Vendor / Payee",
+        "Amount (₹)",
+        "Recurring Monthly",
+      ];
+      const expenseRows = expenses.map((e) => [
+        e.date,
+        e.category,
+        e.description || "-",
+        e.vendor || "-",
+        e.amount,
+        e.isRecurringMonthly ? "Yes" : "No",
+      ]);
+
+      const wsExpenses = XLSX.utils.aoa_to_sheet([
+        ["FACTORY OVERHEAD EXPENSES LOG"],
+        ["Monthly Fixed Target Burn", totalMonthlyOverheads],
+        [],
+        expenseHeaders,
+        ...expenseRows,
+      ]);
+      wsExpenses["!cols"] = [
+        { wch: 14 },
+        { wch: 22 },
+        { wch: 32 },
+        { wch: 20 },
+        { wch: 14 },
+        { wch: 18 },
+      ];
+      XLSX.utils.book_append_sheet(wb, wsExpenses, "Factory Overheads");
+
+      // Trigger instant browser download
+      const dateStr = new Date().toISOString().split("T")[0];
+      const fileName = `Atiq_Studio_PnL_Report_${dateStr}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      setToast({
+        message: `P&L Report exported to Excel (${fileName}) successfully!`,
+        type: "success",
+      });
+    } catch (err: unknown) {
+      console.error("Failed to export Excel report:", err);
+      setToast({
+        message: "Failed to export Excel file. Please try again.",
+        type: "error",
+      });
+    }
+  };
 
   // Navigation Items
   const navItems = [
@@ -3633,13 +3784,24 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     factory covered its fixed overheads.
                   </p>
                 </div>
-                <button
-                  onClick={() => window.print()}
-                  className="px-3 py-2 bg-white border border-[#e7eaf0] text-xs font-semibold rounded-lg text-[#17202d] hover:bg-gray-50 flex items-center gap-1.5 shadow-2xs"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  Print / Export Report
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleExportPnLToExcel}
+                    className="px-3.5 py-2 bg-[#16835d] hover:bg-[#126b4c] text-white text-xs font-bold rounded-xl flex items-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
+                    title="Export complete Profit & Loss report to Excel (.xlsx)"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
+                    <span>Export to Excel (.xlsx)</span>
+                  </button>
+                  <button
+                    onClick={() => window.print()}
+                    className="px-3 py-2 bg-white border border-[#e7eaf0] text-xs font-semibold rounded-xl text-[#17202d] hover:bg-gray-50 flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                    title="Print or Save as PDF"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-gray-500" />
+                    <span>Print</span>
+                  </button>
+                </div>
               </div>
 
               {/* Company Net Position Box */}

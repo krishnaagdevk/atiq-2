@@ -502,3 +502,10 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
   - Cleaned Target Recovery Percentage input in Liquidation Calculator to a clean, standardized text field.
 - **Status Badges Polish**:
   - Removed the inline `(i)` info button from batch status badges (`renderBatchStatusBadge`) across all tables (Batch Register, Stock Overview, Dead Stock Risk) to keep badges clean and uncluttered. Full policy remains accessible via dedicated header action buttons.
+- **Profit & Loss Excel Export (.xlsx)**:
+  - Installed `xlsx` (`v0.18.5`) in `work`.
+  - Added `handleExportPnLToExcel` in `AtiqCRMApp.tsx` which exports a comprehensive 3-sheet Excel workbook (`Atiq_Studio_PnL_Report_<DATE>.xlsx`):
+    1. **Sheet 1: "P&L Summary"**: Executive metrics (Net Delivered Garments, CM2 Gross Margin, Fixed Overhead Burn, True Net Factory Profit, Net Cash Surplus/Burn status, Gross/Net Revenues, Units Sold, and Factory Overhead budget targets).
+    2. **Sheet 2: "SKU Profitability"**: SKU-wise economics breakdown (SKU, Style Name, Category, MRP, COGS, CM1, CM2, CM3, Margin %, and Profitability Status).
+    3. **Sheet 3: "Factory Overheads"**: Overhead logs with category, description, vendor, amount (₹), and recurrence status.
+  - Replaced the single "Print / Export" button in the P&L tab with an "Export to Excel (.xlsx)" primary button (with emerald spreadsheet icon) alongside a secondary "Print" button.
