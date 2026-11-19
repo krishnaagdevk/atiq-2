@@ -6461,7 +6461,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     </label>
                     <input
                       type="text"
-                      value={config.businessName || "Atiq Studio"}
+                      value={config.businessName}
                       onChange={(e) =>
                         setConfig({ ...config, businessName: e.target.value })
                       }
@@ -6474,7 +6474,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                     </label>
                     <input
                       type="text"
-                      value={config.ownerName || "Atiq"}
+                      value={config.ownerName }
                       onChange={(e) =>
                         setConfig({ ...config, ownerName: e.target.value })
                       }
