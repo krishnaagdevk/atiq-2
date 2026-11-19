@@ -55,17 +55,6 @@ export const defaultMarketplacesConfig: MarketplaceChannelConfig[] = [
     status: "Active",
   },
   {
-    id: "ajio",
-    name: "Ajio B2C",
-    commissionPct: 24.0,
-    fixedFee: 18,
-    shippingFee: 75,
-    reverseShippingFee: 90,
-    expectedReturnsPct: 32,
-    gstOnCommissionPct: 18,
-    status: "Active",
-  },
-  {
     id: "shopify",
     name: "Shopify / Direct Website",
     commissionPct: 2.5,
