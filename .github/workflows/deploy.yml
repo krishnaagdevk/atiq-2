@@ -1,0 +1,50 @@
+name: Deploy to Production VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to VPS via SSH
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Remote Deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            echo "🚀 Starting automated deployment for atiq.ravenedge.in..."
+            cd /home/tusharprt5/workspace/atiq-studio
+
+            # Fetch and sync with latest main branch
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Install dependencies
+            pnpm install
+
+            # Build production Next.js standalone bundle
+            pnpm run build
+
+            # Ensure standalone bundle has static assets
+            mkdir -p .next/standalone/.next
+            cp -r .next/static .next/standalone/.next/ 2>/dev/null || true
+            cp -r public .next/standalone/ 2>/dev/null || true
+
+            # Restart the systemd service
+            sudo systemctl restart atiq-studio.service
+
+            # Verify service is running
+            STATUS=$(systemctl is-active atiq-studio.service)
+            echo "✅ Deployment finished! atiq-studio.service status: $STATUS"
+            if [ "$STATUS" != "active" ]; then
+              echo "❌ Service failed to start!"
+              exit 1
+            fi
