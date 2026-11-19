@@ -2091,7 +2091,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
               <p className="text-xs font-bold text-white truncate">
                 {config.ownerName || "Atiq"} (Owner)
               </p>
-            
             </div>
           </div>
         </div>
