@@ -3841,7 +3841,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                         <th className="py-2.5 px-3 text-center">
                           Net Margin %
                         </th>
-                        <th className="py-2.5 px-3 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#f0f2f5]">
@@ -3854,11 +3853,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                           marketingCost: Number(costForm.marketingCost),
                           channel,
                         });
-
-                        const isApplied =
-                          costForm.marketplaceCommissionPct ===
-                            channel.commissionPct &&
-                          costForm.logisticsCost === channel.shippingFee;
 
                         return (
                           <tr
@@ -3928,22 +3922,6 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
                                 {formatPct(sim.netMarginPct)} ({sim.statusBadge}
                                 )
                               </span>
-                            </td>
-
-                            <td className="py-3 px-3 text-right">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleApplyChannelPresetToSku(channel)
-                                }
-                                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition active:scale-95 ${
-                                  isApplied
-                                    ? "bg-[#16835d] text-white cursor-default"
-                                    : "bg-[#111c2d] hover:bg-[#1e2f47] text-white"
-                                }`}
-                              >
-                                {isApplied ? "Applied ✓" : "Apply to SKU"}
-                              </button>
                             </td>
                           </tr>
                         );
