@@ -581,10 +581,12 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
   - **Dual-Mode Config & Automated Build Isolation**:
     - `next.config.ts`: Conditional `output: "export"` only when `process.env.BUILD_TARGET === "apk"`. In normal web mode (`pnpm dev`, `pnpm start`, `pnpm build`), runs standard Next.js with Server Actions and full Mongoose persistence.
     - `scripts/build-apk.js`: Automated temporary backup and static adapter swap during `pnpm apk` execution, guaranteeing offline APK compilation succeeds while restoring live MongoDB actions unconditionally via `finally` block.
-- **RavenEdge VPS Deployment (`34.30.72.112` / `atiq.ravenedge.in`)**:
-  - **Old Project Replaced**: Cleanly stopped old `atiq-studio.service`, backed up `/home/tusharprt5/workspace/atiq-studio-old-backup`, and replaced with the current `atiq-2` project. Preserved all other directories and sites on the VPS.
-  - **Local VPS MongoDB Replicated**: Replicated all 6 collections (`products`, `batches`, `overheadconfigs`, `expenses`, `returns`, `sales`) from MongoDB Atlas directly into the VPS local MongoDB (`atiq` database via `mongodb://atiq_app:AtiqRavenSecure2026!@127.0.0.1:27017/atiq?authSource=admin`).
-  - **Automated CI/CD Git-Push Deployment**: Added `.github/workflows/deploy.yml` with `appleboy/ssh-action` and configured GitHub secrets `SSH_HOST`, `SSH_USER`, and `SSH_KEY` on `krishnaagdevk/atiq-2`. Any push to `main` now automatically pulls, builds Next.js standalone, syncs assets, and restarts `atiq-studio.service` within 20 seconds. Verified live HTTP 200 responses.
+- **RavenEdge VPS Deployment (`34.30.72.112`)**:
+  - Reverted and completely removed per user instruction.
+  - Restored original `/home/tusharprt5/workspace/atiq-studio` (pointing to `atiq-prototype.git`).
+  - Dropped all replicated MongoDB collections (`overheadconfigs`, `expenses`, `returns`, `sales`, `products`, `batches`) from the local VPS MongoDB.
+  - Removed GitHub Actions deployment workflow and deleted all SSH secrets (`SSH_HOST`, `SSH_USER`, `SSH_KEY`) from `krishnaagdevk/atiq-2`.
+  - Zero modifications remain on the VPS from this project.
 - **Dynamic Trims & Materials BOM Table Variants & Inputs**:
   - Added conditional secondary variant/sub-type controls right after the `Item Type` column:
     - **`zipper`**: Secondary dropdown with `concealed` & `cfc`.
@@ -630,7 +632,9 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
   - **Dual-Mode Config & Automated Build Isolation**:
     - `next.config.ts`: Conditional `output: "export"` only when `process.env.BUILD_TARGET === "apk"`. In normal web mode (`pnpm dev`, `pnpm start`, `pnpm build`), runs standard Next.js with Server Actions and full Mongoose persistence.
     - `scripts/build-apk.js`: Automated temporary backup and static adapter swap during `pnpm apk` execution, guaranteeing offline APK compilation succeeds while restoring live MongoDB actions unconditionally via `finally` block.
-- **RavenEdge VPS Deployment (`34.30.72.112` / `atiq.ravenedge.in`)**:
-  - **Old Project Replaced**: Cleanly stopped old `atiq-studio.service`, backed up `/home/tusharprt5/workspace/atiq-studio-old-backup`, and replaced with the current `atiq-2` project. Preserved all other directories and sites on the VPS.
-  - **Local VPS MongoDB Replicated**: Replicated all 6 collections (`products`, `batches`, `overheadconfigs`, `expenses`, `returns`, `sales`) from MongoDB Atlas directly into the VPS local MongoDB (`atiq` database via `mongodb://atiq_app:AtiqRavenSecure2026!@127.0.0.1:27017/atiq?authSource=admin`).
-  - **Automated CI/CD Git-Push Deployment**: Added `.github/workflows/deploy.yml` with `appleboy/ssh-action` and configured GitHub secrets `SSH_HOST`, `SSH_USER`, and `SSH_KEY` on `krishnaagdevk/atiq-2`. Any push to `main` now automatically pulls, builds Next.js standalone, syncs assets, and restarts `atiq-studio.service` within 20 seconds. Verified live HTTP 200 responses.
+- **RavenEdge VPS Deployment (`34.30.72.112`)**:
+  - Reverted and completely removed per user instruction.
+  - Restored original `/home/tusharprt5/workspace/atiq-studio` (pointing to `atiq-prototype.git`).
+  - Dropped all replicated MongoDB collections (`overheadconfigs`, `expenses`, `returns`, `sales`, `products`, `batches`) from the local VPS MongoDB.
+  - Removed GitHub Actions deployment workflow and deleted all SSH secrets (`SSH_HOST`, `SSH_USER`, `SSH_KEY`) from `krishnaagdevk/atiq-2`.
+  - Zero modifications remain on the VPS from this project.
