@@ -553,12 +553,17 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     - **Trims & Accessories Standard Specification Header (Settings)**: Added `(i)` info button on the specification card header displaying the factory manufacturing guidelines and Costing Studio auto-fill tip; removed redundant paragraphs to make the 4 spec cards clean and prominent.
     - **Costing Studio Trims Header**: Added matching `(i)` info button with full trims breakdown tips (Zippers, Buttons, Fusing, Shoulder Pads, Eye Hooks) directly in the BOM table header.
     - Supported dual interaction modes: smooth hover preview on desktop and click-to-toggle with close button on mobile touch devices.
-- **Capacitor Mobile Integration & Android APK Build**:
-  - Integrated Capacitor packages: `@capacitor/core` (`^8.6.2`), `@capacitor/cli` (`^8.6.2`), and `@capacitor/android` (`^8.6.2`).
-  - Configured `capacitor.config.ts` (`appId: "com.atiqcrm.app"`, `appName: "Atiq CRM"`, `webDir: "public"`).
-  - Configured native Android platform via Gradle with local SDK path (`android-36`, build tools `36.0.0`).
-  - Successfully generated Debug APK:
-    - Primary output: `work/android/app/build/outputs/apk/debug/app-debug.apk` (4.12 MB).
+- **Capacitor Mobile Integration & Standalone Offline Android APK Build**:
+  - **Issue Resolved**: Earlier build bundled a placeholder `public` folder instead of the compiled Next.js application, resulting in a blank screen upon mobile installation.
+  - **Client-Safe Offline Service Layer (`src/lib/crmService.ts`)**: Decoupled UI components from `"use server"` directives so Next.js static HTML/JS/CSS export (`output: "export"`) executes with 0 errors. Implemented full `localStorage` persistence so user additions/modifications (garments, batches, expenses, categories) persist permanently on the mobile device across app launches.
+  - **Static Export Pipeline**:
+    - Configured `next.config.ts` with `output: "export"`.
+    - Configured `capacitor.config.ts` with `webDir: "out"`.
+    - Exported full single-page application into `work/out` and synced via `pnpm cap sync android` into native assets (`assets/public/`).
+  - **Rebuilt Android Debug APK**:
+    - Recompiled with Gradle (`assembleDebug`).
+    - Output location: `work/atiq-crm-debug.apk` (4.70 MB).
+    - Contains complete pre-rendered HTML, JavaScript runtime, Tailwind styling, and full interactivity offline.
     - Convenient root copy: `work/atiq-crm-debug.apk`.
 - **Dynamic Trims & Materials BOM Table Variants & Inputs**:
   - Added conditional secondary variant/sub-type controls right after the `Item Type` column:
@@ -577,10 +582,15 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     - **Trims & Accessories Standard Specification Header (Settings)**: Added `(i)` info button on the specification card header displaying the factory manufacturing guidelines and Costing Studio auto-fill tip; removed redundant paragraphs to make the 4 spec cards clean and prominent.
     - **Costing Studio Trims Header**: Added matching `(i)` info button with full trims breakdown tips (Zippers, Buttons, Fusing, Shoulder Pads, Eye Hooks) directly in the BOM table header.
     - Supported dual interaction modes: smooth hover preview on desktop and click-to-toggle with close button on mobile touch devices.
-- **Capacitor Mobile Integration & Android APK Build**:
-  - Integrated Capacitor packages: `@capacitor/core` (`^8.6.2`), `@capacitor/cli` (`^8.6.2`), and `@capacitor/android` (`^8.6.2`).
-  - Configured `capacitor.config.ts` (`appId: "com.atiqcrm.app"`, `appName: "Atiq CRM"`, `webDir: "public"`).
-  - Configured native Android platform via Gradle with local SDK path (`android-36`, build tools `36.0.0`).
-  - Successfully generated Debug APK:
-    - Primary output: `work/android/app/build/outputs/apk/debug/app-debug.apk` (4.12 MB).
+- **Capacitor Mobile Integration & Standalone Offline Android APK Build**:
+  - **Issue Resolved**: Earlier build bundled a placeholder `public` folder instead of the compiled Next.js application, resulting in a blank screen upon mobile installation.
+  - **Client-Safe Offline Service Layer (`src/lib/crmService.ts`)**: Decoupled UI components from `"use server"` directives so Next.js static HTML/JS/CSS export (`output: "export"`) executes with 0 errors. Implemented full `localStorage` persistence so user additions/modifications (garments, batches, expenses, categories) persist permanently on the mobile device across app launches.
+  - **Static Export Pipeline**:
+    - Configured `next.config.ts` with `output: "export"`.
+    - Configured `capacitor.config.ts` with `webDir: "out"`.
+    - Exported full single-page application into `work/out` and synced via `pnpm cap sync android` into native assets (`assets/public/`).
+  - **Rebuilt Android Debug APK**:
+    - Recompiled with Gradle (`assembleDebug`).
+    - Output location: `work/atiq-crm-debug.apk` (4.70 MB).
+    - Contains complete pre-rendered HTML, JavaScript runtime, Tailwind styling, and full interactivity offline.
     - Convenient root copy: `work/atiq-crm-debug.apk`.
