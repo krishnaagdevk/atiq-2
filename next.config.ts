@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
+const isApkBuild = process.env.BUILD_TARGET === "apk";
+
 const nextConfig: NextConfig = {
-  output: "export",
+  ...(isApkBuild ? { output: "export" } : {}),
   images: {
     unoptimized: true,
   },

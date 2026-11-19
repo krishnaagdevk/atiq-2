@@ -82,7 +82,7 @@ import {
   addExpenseCategoryAction,
   addGarmentCategoryAction,
   deleteGarmentCategoryAction,
-} from "@/lib/crmService";
+} from "@/actions/crm";
 
 interface AtiqAppProps {
   initialData: {

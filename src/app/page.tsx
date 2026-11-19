@@ -1,7 +1,9 @@
 import AtiqCRMApp from "@/components/AtiqCRMApp";
-import { getInitialData } from "@/lib/crmService";
+import { getInitialData } from "@/actions/crm";
 
-export default function Page() {
-  const data = getInitialData();
+export const dynamic = "force-dynamic";
+
+export default async function Page() {
+  const data = await getInitialData();
   return <AtiqCRMApp initialData={data} />;
 }

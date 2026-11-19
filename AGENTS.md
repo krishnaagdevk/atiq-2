@@ -572,6 +572,15 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     3. Runs Gradle `assembleDebug` using local SDK paths.
     4. Automatically copies the built APK directly to `work/atiq-crm-debug.apk` and logs the output path and size.
   - Registered scripts in `package.json`: `"apk": "node scripts/build-apk.js"` and `"build:apk": "node scripts/build-apk.js"`.
+- **Live MongoDB Atlas Connection & Dual-Mode Build Architecture**:
+  - **Issue Resolved**: When `next.config.ts` had static `output: "export"` and UI imported `crmService.ts` for APK bundling, UI edits were only writing to client localStorage/memory and not persisting to MongoDB Atlas.
+  - **Live Database Connection**:
+    - Reconnected `src/components/AtiqCRMApp.tsx` and `src/app/page.tsx` back to `@/actions/crm`.
+    - Set `export const dynamic = "force-dynamic"` on `src/app/page.tsx` to ensure real-time SSR hydration on every request.
+    - Verified MongoDB Atlas connection (`MONGODB_URI`): confirmed all collections (`overheadconfigs`, `batches`, `expenses`, `returns`, `sales`, `products`) are live, accessible, and receive updates.
+  - **Dual-Mode Config & Automated Build Isolation**:
+    - `next.config.ts`: Conditional `output: "export"` only when `process.env.BUILD_TARGET === "apk"`. In normal web mode (`pnpm dev`, `pnpm start`, `pnpm build`), runs standard Next.js with Server Actions and full Mongoose persistence.
+    - `scripts/build-apk.js`: Automated temporary backup and static adapter swap during `pnpm apk` execution, guaranteeing offline APK compilation succeeds while restoring live MongoDB actions unconditionally via `finally` block.
 - **Dynamic Trims & Materials BOM Table Variants & Inputs**:
   - Added conditional secondary variant/sub-type controls right after the `Item Type` column:
     - **`zipper`**: Secondary dropdown with `concealed` & `cfc`.
@@ -608,3 +617,12 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     3. Runs Gradle `assembleDebug` using local SDK paths.
     4. Automatically copies the built APK directly to `work/atiq-crm-debug.apk` and logs the output path and size.
   - Registered scripts in `package.json`: `"apk": "node scripts/build-apk.js"` and `"build:apk": "node scripts/build-apk.js"`.
+- **Live MongoDB Atlas Connection & Dual-Mode Build Architecture**:
+  - **Issue Resolved**: When `next.config.ts` had static `output: "export"` and UI imported `crmService.ts` for APK bundling, UI edits were only writing to client localStorage/memory and not persisting to MongoDB Atlas.
+  - **Live Database Connection**:
+    - Reconnected `src/components/AtiqCRMApp.tsx` and `src/app/page.tsx` back to `@/actions/crm`.
+    - Set `export const dynamic = "force-dynamic"` on `src/app/page.tsx` to ensure real-time SSR hydration on every request.
+    - Verified MongoDB Atlas connection (`MONGODB_URI`): confirmed all collections (`overheadconfigs`, `batches`, `expenses`, `returns`, `sales`, `products`) are live, accessible, and receive updates.
+  - **Dual-Mode Config & Automated Build Isolation**:
+    - `next.config.ts`: Conditional `output: "export"` only when `process.env.BUILD_TARGET === "apk"`. In normal web mode (`pnpm dev`, `pnpm start`, `pnpm build`), runs standard Next.js with Server Actions and full Mongoose persistence.
+    - `scripts/build-apk.js`: Automated temporary backup and static adapter swap during `pnpm apk` execution, guaranteeing offline APK compilation succeeds while restoring live MongoDB actions unconditionally via `finally` block.
