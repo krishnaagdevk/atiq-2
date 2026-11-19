@@ -2091,10 +2091,7 @@ export default function AtiqCRMApp({ initialData }: AtiqAppProps) {
               <p className="text-xs font-bold text-white truncate">
                 {config.ownerName || "Atiq"} (Owner)
               </p>
-              <p className="text-[10px] text-[#64d7a9] flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#64d7a9] animate-pulse"></span>
-                Database Connected
-              </p>
+            
             </div>
           </div>
         </div>
