@@ -562,9 +562,16 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     - Exported full single-page application into `work/out` and synced via `pnpm cap sync android` into native assets (`assets/public/`).
   - **Rebuilt Android Debug APK**:
     - Recompiled with Gradle (`assembleDebug`).
-    - Output location: `work/atiq-crm-debug.apk` (4.70 MB).
+    - Output location: `work/atiq-crm-debug.apk` (4.63 MB).
     - Contains complete pre-rendered HTML, JavaScript runtime, Tailwind styling, and full interactivity offline.
     - Convenient root copy: `work/atiq-crm-debug.apk`.
+- **One-Command APK Build Script (`pnpm apk` / `pnpm build:apk`)**:
+  - Added automated build pipeline script in `scripts/build-apk.js`:
+    1. Runs `pnpm build` (exports Next.js to `out/`).
+    2. Runs `pnpm cap sync android` (syncs web assets into Android assets).
+    3. Runs Gradle `assembleDebug` using local SDK paths.
+    4. Automatically copies the built APK directly to `work/atiq-crm-debug.apk` and logs the output path and size.
+  - Registered scripts in `package.json`: `"apk": "node scripts/build-apk.js"` and `"build:apk": "node scripts/build-apk.js"`.
 - **Dynamic Trims & Materials BOM Table Variants & Inputs**:
   - Added conditional secondary variant/sub-type controls right after the `Item Type` column:
     - **`zipper`**: Secondary dropdown with `concealed` & `cfc`.
@@ -591,6 +598,13 @@ const eco = calculateGarmentEconomics({ fabricQty, fabricRate, ...all inputs });
     - Exported full single-page application into `work/out` and synced via `pnpm cap sync android` into native assets (`assets/public/`).
   - **Rebuilt Android Debug APK**:
     - Recompiled with Gradle (`assembleDebug`).
-    - Output location: `work/atiq-crm-debug.apk` (4.70 MB).
+    - Output location: `work/atiq-crm-debug.apk` (4.63 MB).
     - Contains complete pre-rendered HTML, JavaScript runtime, Tailwind styling, and full interactivity offline.
     - Convenient root copy: `work/atiq-crm-debug.apk`.
+- **One-Command APK Build Script (`pnpm apk` / `pnpm build:apk`)**:
+  - Added automated build pipeline script in `scripts/build-apk.js`:
+    1. Runs `pnpm build` (exports Next.js to `out/`).
+    2. Runs `pnpm cap sync android` (syncs web assets into Android assets).
+    3. Runs Gradle `assembleDebug` using local SDK paths.
+    4. Automatically copies the built APK directly to `work/atiq-crm-debug.apk` and logs the output path and size.
+  - Registered scripts in `package.json`: `"apk": "node scripts/build-apk.js"` and `"build:apk": "node scripts/build-apk.js"`.
